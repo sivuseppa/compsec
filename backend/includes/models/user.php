@@ -14,9 +14,7 @@ require_once BACKEND_ROOT . '/includes/dotenv/dotenv.php';
 final class User {
 
 	private $db;
-	public $id = null;
-	// public $username = '';
-	// public $password = '';
+	public $id      = null;
 	public $role    = 'viewer';
 	private $cipher = 'aes-256-cbc';
 

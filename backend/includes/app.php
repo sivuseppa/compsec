@@ -79,12 +79,4 @@ final class App {
 	private function init_user() {
 		$this->user = new User();
 	}
-
-
-	/**
-	 * Add a new user
-	 */
-	public function add_user() {
-		$this->user->add();
-	}
 }

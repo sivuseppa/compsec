@@ -39,7 +39,7 @@
 
     createApp({
       apiUrl: /backend/,
-      userId: fetchUserId(),
+      isLoggedIn: fetchUserId(),
       username: '',
       password: '',
       page: pages[1],
@@ -54,7 +54,7 @@
           body: JSON.stringify({ username: this.username, password: this.password, action: 'login' }),
         });
         const data = await response.json();
-        this.userId = fetchUserId();
+        this.isLoggedIn = fetchUserId();
         this.username = '';
         this.password = '';
       },
@@ -65,7 +65,7 @@
           method: 'POST',
           body: JSON.stringify({ action: 'logout' }),
         });
-        this.userId = fetchUserId();
+        this.isLoggedIn = fetchUserId();
       },
     }).mount('#app')
 
@@ -74,21 +74,21 @@
 <body id="app" v-cloak>
   <header class="main">
     <h1>Home Sweet App</h1>
-    <button @click="logout" class="logoutbutton button" v-if="userId">Logout</button>
+    <button @click="logout" class="logoutbutton button" v-if="isLoggedIn">Logout</button>
   </header>
-  <nav v-if="userId">
+  <nav v-if="isLoggedIn">
     <div class="nav-item button" @click="setPage(1)">Dashboard</div>
     <div class="nav-item button" @click="setPage(2)">Home Assistants</div>
     <div class="nav-item button" @click="setPage(3)">Users</div>
     <div class="nav-item button" @click="setPage(4)">Settings</div>
   </nav>
-  <main v-if="userId">
+  <main v-if="isLoggedIn">
     <header>
       <h2>{{ page.title }}</h2>
     </header>
     <section>{{ page.content }}</section>
   </main>
-  <form @submit.prevent="login" id="loginform" class="loginform" v-if="!userId">
+  <form @submit.prevent="login" id="loginform" class="loginform" v-if="!isLoggedIn">
     <label>
       <small>Username</small>
       <input id="username" name="username" type="text" v-model="username" />
