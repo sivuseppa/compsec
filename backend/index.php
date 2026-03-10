@@ -1,48 +1,84 @@
 <?php
 /**
- * API entry point
+ * Backend API entry point
  *
  * @package SweetHomeApp
  */
 
+header( 'Content-Type: application/json' );
 define( 'BACKEND_ROOT', dirname( __FILE__ ) );
-
 require_once BACKEND_ROOT . '/includes/app.php';
 
-$app = new App();
+try {
 
-$requestUri    = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
-$requestMethod = $_SERVER['REQUEST_METHOD'];
+	$app            = new App();
+	$request_method = $_SERVER['REQUEST_METHOD'];
 
-switch ( $requestMethod ) {
-	case 'GET':
-		$action = isset( $_GET['action'] ) ? $_GET['action'] : '';
-		if ( 'getUser' === $action ) {
-			$app->get_user();
-		} elseif ( 'getAssistant' === $action ) {
-			$app->get_assistant();
-		} elseif ( 'getAllAssistants' === $action ) {
-			$app->get_all_assistants();
-		}
-		break;
-	case 'POST':
-		// Get and decode the JSON contents.
+	$data   = null;
+	$action = null;
+
+	// Get action parameters and POST data.
+	if ( 'POST' === $request_method ) {
 		$json   = file_get_contents( 'php://input' );
 		$data   = json_decode( $json );
 		$action = isset( $data->action ) ? $data->action : '';
 
+		// Login or Create account are only actions allowed without authentication.
 		if ( 'login' === $action ) {
-			$app->login();
-		} elseif ( 'addUser' === $action ) {
-			$app->add_user();
-		} elseif ( 'editUser' === $action ) {
-			$app->edit_user();
-		} elseif ( 'addAssistant' === $action ) {
-			$app->add_assistant();
-		} elseif ( 'editAssistant' === $action ) {
-			$app->edit_assistant();
+			$app->user->login( $data );
 		}
-		break;
-	default:
-		break;
+	} elseif ( 'GET' === $request_method ) {
+		$action = isset( $_GET['action'] ) ? $_GET['action'] : '';
+	}
+
+	// Stop unauthenticated execution here.
+	if ( ! $app->user->is_logged_in() ) {
+		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set deprecated timestamp to remove cookie.
+		http_response_code( 401 );
+		echo json_encode(
+			array(
+				'status'  => 'error 1',
+				'message' => 'unauthorized',
+			)
+		);
+		exit;
+	}
+
+	// Call app methods based on a action parameter.
+	switch ( $request_method ) {
+		case 'GET':
+			if ( 'getUser' === $action ) {
+				$app->get_user();
+			} elseif ( 'getAssistant' === $action ) {
+				$app->get_assistant();
+			} elseif ( 'getAllAssistants' === $action ) {
+				$app->get_all_assistants();
+			}
+			break;
+		case 'POST':
+			if ( 'logout' === $action ) {
+				$app->user->logout();
+			} elseif ( 'addUser' === $action ) {
+				$app->user->add( $data );
+			} elseif ( 'editUser' === $action ) {
+				$app->edit_user();
+			} elseif ( 'addAssistant' === $action ) {
+				$app->add_assistant();
+			} elseif ( 'editAssistant' === $action ) {
+				$app->edit_assistant();
+			}
+			break;
+		default:
+			break;
+	}
+} catch ( Exception $exception ) {
+	error_log( $exception->getMessage(), 3, BACKEND_ROOT . '/includes/error.log' );
+	http_response_code( 500 );
+	echo json_encode(
+		array(
+			'status'  => 'error',
+			'message' => '',
+		)
+	);
+	exit;
 }

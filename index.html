@@ -3,26 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Home Sweet App</title>
   <link href="style.css" rel="stylesheet" />
   <script type="module">
-    import App from './app.js';
-    App.mount('#app')
+
+    import { createApp } from 'https://unpkg.com/petite-vue?module';
+
+    const fetchUserId = () => {
+      const cookieValue = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('HSA_TOKEN='))
+        ?.split('=')[1];
+      const userId = cookieValue?.split('_')[0];
+      return userId;
+    }
+
+    const pages = {
+      1: {
+        title: 'Dashboard',
+        content: 'Dashboard content goes here.'
+      },
+      2: {
+        title: 'Home Assistans',
+        content: 'Home Assistans content goes here.'
+      },
+      3: {
+        title: 'Users',
+        content: 'Users content goes here.'
+      },
+      4: {
+        title: 'Settings',
+        content: 'Settings content goes here.'
+      },
+    }
+
+    createApp({
+      apiUrl: /backend/,
+      userId: fetchUserId(),
+      username: '',
+      password: '',
+      page: pages[1],
+
+      setPage(num) {
+        this.page = pages[num];
+      },
+
+      async login(e) {
+        const response = await fetch(this.apiUrl, {
+          method: 'POST',
+          body: JSON.stringify({ username: this.username, password: this.password, action: 'login' }),
+        });
+        const data = await response.json();
+        this.userId = fetchUserId();
+        this.username = '';
+        this.password = '';
+      },
+
+      async logout() {
+        console.log('logout');
+        const response = await fetch(this.apiUrl, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'logout' }),
+        });
+        this.userId = fetchUserId();
+      },
+    }).mount('#app')
+
   </script>
 </head>
-<body id="app">
-  <header>
+<body id="app" v-cloak>
+  <header class="main">
     <h1>Home Sweet App</h1>
+    <button @click="logout" class="logoutbutton button" v-if="userId">Logout</button>
   </header>
-  <nav>
-    <a href="">Nav item 1</a>
-    <a href="">Nav item 2</a>
-    <a href="">Nav item 3</a>
-    <a href="">Nav item 4</a>
+  <nav v-if="userId">
+    <div class="nav-item button" @click="setPage(1)">Dashboard</div>
+    <div class="nav-item button" @click="setPage(2)">Home Assistants</div>
+    <div class="nav-item button" @click="setPage(3)">Users</div>
+    <div class="nav-item button" @click="setPage(4)">Settings</div>
   </nav>
-  <main>
-    {{ mainContent }}
+  <main v-if="userId">
+    <header>
+      <h2>{{ page.title }}</h2>
+    </header>
+    <section>{{ page.content }}</section>
   </main>
+  <form @submit.prevent="login" id="loginform" class="loginform" v-if="!userId">
+    <label>
+      <small>Username</small>
+      <input id="username" name="username" type="text" v-model="username" />
+    </label>
+    <label>
+      <small>Password</small>
+      <input type="password" id="password" name="password" type="text" v-model="password" />
+    </label>
+    <button class="button">Login</button>
+  </form>
   <footer>
     <p>&copy; 2026</p>
   </footer>
