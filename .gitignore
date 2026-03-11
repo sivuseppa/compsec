@@ -1,3 +1,5 @@
 .env
 db.sqlite
 error.log
+/vendor/
+composer.lock

@@ -1,0 +1,12 @@
+{
+  "name": "mikko/compsec",
+  "authors": [
+    {
+      "name": "Mikko Mörö",
+      "email": "mikko@sivuseppa.fi"
+    }
+  ],
+  "require-dev": {
+    "phpunit/phpunit": "^13"
+  }
+}

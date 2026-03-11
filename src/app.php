@@ -7,7 +7,9 @@
 
 namespace SweetHomeApp;
 
-require_once INC_DIR . 'user.php';
+use SQLite3;
+
+require_once SRC_DIR . 'user.php';
 
 /**
  * Class App
@@ -27,7 +29,7 @@ final class App {
 	private function init_db() {
 
 		try {
-			$this->db = new \SQLite3( DATA_DIR . 'db/db.sqlite' );
+			$this->db = new SQLite3( DATA_DIR . 'db/db.sqlite' );
 
 			// Errors are emitted as warnings by default, enable proper error handling.
 			$this->db->enableExceptions( true );

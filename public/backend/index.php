@@ -7,15 +7,15 @@
 
 namespace SweetHomeApp;
 
-define( 'INC_DIR', dirname( __DIR__, 2 ) . '/includes/' );
+define( 'SRC_DIR', dirname( __DIR__, 2 ) . '/src/' );
 define( 'DATA_DIR', dirname( __DIR__, 2 ) . '/data/' );
 header( 'Content-Type: application/json' );
 
-require_once INC_DIR . 'dotenv/dotenv.php';
+require_once SRC_DIR . 'dotenv/dotenv.php';
 new DotEnv( DATA_DIR . '.env' )->load(); // Load .env file data to $_ENV superglobal.
 
-require_once INC_DIR . 'logger.php';
-require_once INC_DIR . 'app.php';
+require_once SRC_DIR . 'logger.php';
+require_once SRC_DIR . 'app.php';
 
 try {
 	$app = new App();

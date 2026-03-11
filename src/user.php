@@ -7,18 +7,20 @@
 
 namespace SweetHomeApp;
 
+use SQLite3;
+
 /**
  * The User model class
  */
 final class User {
 
 	private $db;
-	public $id      = null;
-	public $role    = 'viewer';
-	private $cipher = 'aes-256-cbc';
+	public $id     = null;
+	public $role   = 'viewer';
+	public $cipher = 'aes-256-cbc';
 
 	public function __construct() {
-		$this->db = new \SQLite3( DATA_DIR . 'db/db.sqlite' );
+		$this->db = new SQLite3( DATA_DIR . 'db/db.sqlite' );
 	}
 
 
@@ -33,14 +35,15 @@ final class User {
 	/**
 	 * Create a cryptographically secure token for login.
 	 *
+	 * @param string $time The timestamp.
 	 * @throws \Exception When somethin goes wrong.
 	 */
-	public function create_token() {
+	public function create_token( $time ) {
 
 		$data = json_encode(
 			array(
 				'user_id'   => $this->id,
-				'timestamp' => time(),
+				'timestamp' => $time,
 			)
 		);
 
@@ -68,6 +71,69 @@ final class User {
 		} else {
 			throw new \Exception( 'Error Processing Request' );
 		}
+	}
+
+
+	/**
+	 * Log in
+	 *
+	 * @param object $post_data the post data.
+	 * @throws \Exception If outhorization fails.
+	 */
+	public function login( $post_data ) {
+
+		$username = $post_data->username;
+		$password = $post_data->password;
+
+		try {
+			$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "username" = ?' );
+			$statement->bindValue( 1, $username );
+			$result    = $statement->execute();
+			$user_data = $result->fetchArray( SQLITE3_ASSOC );
+
+			if ( ! $user_data ) {
+				throw new \Exception( 'User not found.' );
+			}
+
+			// Verify password and set login cookie.
+			if ( password_verify( $password, $user_data['password'] ) ) {
+
+				$this->id = $user_data['id'];
+				$time     = time(); // define time variable here to ease unit testing.
+
+				$options = array(
+					'expires'  => $time + 3600,
+					'path'     => '/',
+					'secure'   => true,
+					'httponly' => false,
+					'samesite' => 'Strict',
+				);
+				setcookie(
+					'HSA_TOKEN',
+					$this->id . '_' . $this->create_token( $time ),
+					$options
+				);
+				echo json_encode(
+					array(
+						'status' => 'success',
+						'data'   => 'User logged in.',
+					)
+				);
+			} else {
+				throw new \Exception( 'Unouthorized.' );
+			}
+		} catch ( \Throwable $exception ) {
+			setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
+
+			http_response_code( 401 );
+			echo json_encode(
+				array(
+					'status'  => 'error',
+					'message' => $exception->getMessage(),
+				)
+			);
+		}
+		exit; // All done.
 	}
 
 
@@ -106,7 +172,7 @@ final class User {
 	 *
 	 * @param string $iv The initialization vector.
 	 */
-	private function save_init_vector( $iv ) {
+	public function save_init_vector( $iv ) {
 		$statement = $this->db->prepare(
 			'UPDATE users SET iv = :iv
 			WHERE id = :id'
@@ -120,7 +186,7 @@ final class User {
 	/**
 	 * Return initialization vector from the database.
 	 */
-	private function get_init_vector() {
+	public function get_init_vector() {
 		$statement = $this->db->prepare(
 			'SELECT iv FROM users
 			WHERE id = :id'
@@ -130,66 +196,6 @@ final class User {
 		$user_data = $results->fetchArray( SQLITE3_ASSOC );
 
 		return isset( $user_data['iv'] ) ? $user_data['iv'] : '';
-	}
-
-
-	/**
-	 * Log in
-	 *
-	 * @param object $post_data the post data.
-	 * @throws \Exception If outhorization fails.
-	 */
-	public function login( $post_data ) {
-
-		$username = $post_data->username;
-		$password = $post_data->password;
-
-		try {
-			$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "username" = ?' );
-			$statement->bindValue( 1, $username );
-			$result    = $statement->execute();
-			$user_data = $result->fetchArray( SQLITE3_ASSOC );
-
-			if ( ! $user_data ) {
-				throw new \Exception( 'User not found.' );
-			}
-
-			// Verify password and set login cookie.
-			if ( password_verify( $password, $user_data['password'] ) ) {
-				$this->id = $user_data['id'];
-				$options  = array(
-					'expires'  => time() + 3600,
-					'path'     => '/',
-					'secure'   => true,
-					'httponly' => false,
-					'samesite' => 'Strict',
-				);
-				setcookie(
-					'HSA_TOKEN',
-					$this->id . '_' . $this->create_token(),
-					$options
-				);
-				echo json_encode(
-					array(
-						'status' => 'success',
-						'data'   => 'User logged in.',
-					)
-				);
-			} else {
-				throw new \Exception( 'Unouthorized.' );
-			}
-		} catch ( \Throwable $exception ) {
-			setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
-
-			http_response_code( 401 );
-			echo json_encode(
-				array(
-					'status'  => 'error',
-					'message' => $exception->getMessage(),
-				)
-			);
-		}
-		exit; // All done.
 	}
 
 
