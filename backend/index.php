@@ -5,13 +5,17 @@
  * @package SweetHomeApp
  */
 
+namespace SweetHomeApp;
+
 header( 'Content-Type: application/json' );
 define( 'BACKEND_ROOT', dirname( __FILE__ ) );
+
 require_once BACKEND_ROOT . '/includes/app.php';
+require_once BACKEND_ROOT . '/includes/logger.php';
 
 try {
+	$app = new App();
 
-	$app            = new App();
 	$request_method = $_SERVER['REQUEST_METHOD'];
 
 	$data   = null;
@@ -33,7 +37,7 @@ try {
 
 	// Stop unauthenticated execution here.
 	if ( ! $app->user->is_logged_in() ) {
-		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set deprecated timestamp to remove cookie.
+		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
 		http_response_code( 401 );
 		echo json_encode(
 			array(
@@ -71,13 +75,13 @@ try {
 		default:
 			break;
 	}
-} catch ( Exception $exception ) {
-	error_log( $exception->getMessage(), 3, BACKEND_ROOT . '/includes/error.log' );
+} catch ( \Throwable $exception ) {
+	new Logger()->write( $exception->getMessage() );
 	http_response_code( 500 );
 	echo json_encode(
 		array(
 			'status'  => 'error',
-			'message' => '',
+			'message' => '#1',
 		)
 	);
 	exit;

@@ -5,6 +5,8 @@
  * @package SweetHomeApp
  */
 
+namespace SweetHomeApp;
+
 require_once BACKEND_ROOT . '/includes/dotenv/dotenv.php';
 ( new DotEnv( BACKEND_ROOT . '/includes/.env' ) )->load(); // Load .env file data to $_ENV superglobal.
 
@@ -19,7 +21,7 @@ final class User {
 	private $cipher = 'aes-256-cbc';
 
 	public function __construct() {
-		$this->db = new SQLite3( BACKEND_ROOT . '/includes/db/db.sqlite' );
+		$this->db = new \SQLite3( BACKEND_ROOT . '/includes/db/db.sqlite' );
 	}
 
 
@@ -34,7 +36,7 @@ final class User {
 	/**
 	 * Create a cryptographically secure token for login.
 	 *
-	 * @throws Exception When somethin goes wrong.
+	 * @throws \Exception When somethin goes wrong.
 	 */
 	public function create_token() {
 
@@ -59,7 +61,7 @@ final class User {
 			);
 
 			if ( ! $token ) {
-				throw new Exception( 'Error Processing Request' );
+				throw new \Exception( 'Error Processing Request' );
 			}
 
 			// Save IV to the the database.
@@ -67,7 +69,7 @@ final class User {
 
 			return $token; // phpcs:ignore
 		} else {
-			throw new Exception( 'Error Processing Request' );
+			throw new \Exception( 'Error Processing Request' );
 		}
 	}
 
@@ -89,8 +91,8 @@ final class User {
 			$options = 0,
 			$this->get_init_vector()  // User specific IV from the database.
 		);
+		$token_data = json_decode( $token_data, true );
 
-		$token_data    = json_decode( $token_data, true );
 		$is_valid_user = isset( $token_data['user_id'] )
 						&& intval( $token_data['user_id'] ) === intval( $this->id );
 		$cookietime    = isset( $token_data['timestamp'] ) ? $token_data['timestamp'] : '';
@@ -138,7 +140,7 @@ final class User {
 	 * Log in
 	 *
 	 * @param object $post_data the post data.
-	 * @throws Exception If outhorization fails.
+	 * @throws \Exception If outhorization fails.
 	 */
 	public function login( $post_data ) {
 
@@ -148,12 +150,11 @@ final class User {
 		try {
 			$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "username" = ?' );
 			$statement->bindValue( 1, $username );
-
 			$result    = $statement->execute();
 			$user_data = $result->fetchArray( SQLITE3_ASSOC );
 
 			if ( ! $user_data ) {
-				throw new Exception( 'User not found.' );
+				throw new \Exception( 'User not found.' );
 			}
 
 			// Verify password and set login cookie.
@@ -178,10 +179,10 @@ final class User {
 					)
 				);
 			} else {
-				throw new Exception( 'Unouthorized.' );
+				throw new \Exception( 'Unouthorized.' );
 			}
-		} catch ( Exception $exception ) {
-			setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set deprecated timestamp to remove cookie.
+		} catch ( \Throwable $exception ) {
+			setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
 
 			http_response_code( 401 );
 			echo json_encode(
@@ -199,7 +200,7 @@ final class User {
 	 * Logout
 	 */
 	public function logout() {
-		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set deprecated timestamp to remove cookie.
+		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
 		http_response_code( 200 );
 		echo json_encode(
 			array(
@@ -242,7 +243,7 @@ final class User {
 				)
 			);
 
-		} catch ( Exception $exception ) {
+		} catch ( \Throwable $exception ) {
 			http_response_code( 500 );
 			echo json_encode(
 				array(

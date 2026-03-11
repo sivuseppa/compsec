@@ -5,9 +5,10 @@
  * @package SweetHomeApp
  */
 
-// namespace Api / DB;
+namespace SweetHomeApp;
 
-require_once BACKEND_ROOT . '/includes/models/user.php';
+require_once BACKEND_ROOT . '/includes/user.php';
+
 
 /**
  * Class App
@@ -16,8 +17,10 @@ final class App {
 
 	private $db;
 	public $user;
+	public $logger;
 
 	public function __construct() {
+		$this->logger = new Logger();
 		$this->init_db();
 		$this->init_user();
 	}
@@ -26,7 +29,7 @@ final class App {
 
 		try {
 
-			$this->db = new SQLite3( BACKEND_ROOT . '/includes/db/db.sqlite' );
+			$this->db = new \SQLite3( BACKEND_ROOT . '/includes/db/db.sqlite' );
 
 			// Errors are emitted as warnings by default, enable proper error handling.
 			$this->db->enableExceptions( true );
@@ -67,8 +70,8 @@ final class App {
 				$statement->bindValue( ':role', 'admin' );
 				$statement->execute();
 			}
-		} catch ( Exception $exception ) {
-			error_log( 'DB Error: ' . $exception, 3, BACKEND_ROOT . '/includes/error.log' );
+		} catch ( \Throwable $exception ) {
+			$this->logger->write( 'DB Error: ' . $exception->getMessage() );
 			exit;
 		}
 	}
