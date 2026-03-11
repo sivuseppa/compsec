@@ -7,9 +7,6 @@
 
 namespace SweetHomeApp;
 
-require_once BACKEND_ROOT . '/includes/dotenv/dotenv.php';
-( new DotEnv( BACKEND_ROOT . '/includes/.env' ) )->load(); // Load .env file data to $_ENV superglobal.
-
 /**
  * The User model class
  */
@@ -21,7 +18,7 @@ final class User {
 	private $cipher = 'aes-256-cbc';
 
 	public function __construct() {
-		$this->db = new \SQLite3( BACKEND_ROOT . '/includes/db/db.sqlite' );
+		$this->db = new \SQLite3( INC . 'db/db.sqlite' );
 	}
 
 

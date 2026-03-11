@@ -91,11 +91,11 @@
   <form @submit.prevent="login" id="loginform" class="loginform" v-if="!isLoggedIn">
     <label>
       <small>Username</small>
-      <input id="username" name="username" type="text" v-model="username" />
+      <input id="username" name="username" type="text" v-model="username" required />
     </label>
     <label>
       <small>Password</small>
-      <input type="password" id="password" name="password" type="text" v-model="password" />
+      <input type="password" id="password" name="password" type="text" v-model="password" required />
     </label>
     <button class="button">Login</button>
   </form>

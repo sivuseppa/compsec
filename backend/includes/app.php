@@ -7,8 +7,7 @@
 
 namespace SweetHomeApp;
 
-require_once BACKEND_ROOT . '/includes/user.php';
-
+require_once INC . 'user.php';
 
 /**
  * Class App
@@ -29,7 +28,7 @@ final class App {
 
 		try {
 
-			$this->db = new \SQLite3( BACKEND_ROOT . '/includes/db/db.sqlite' );
+			$this->db = new \SQLite3( INC . 'db/db.sqlite' );
 
 			// Errors are emitted as warnings by default, enable proper error handling.
 			$this->db->enableExceptions( true );
@@ -54,21 +53,27 @@ final class App {
 				)'
 			);
 
-			// Add an admin user for development purposes, if not found already.
+			$app_env    = isset( $_ENV['APP_ENV'] ) ? $_ENV['APP_ENV'] : '';
+			$admin_pass = isset( $_ENV['ADMIN_PASS'] ) ? $_ENV['ADMIN_PASS'] : '';
 
-			$results   = $this->db->query( 'SELECT * FROM "users" WHERE "username" = "admin"' );
-			$user_data = $results->fetchArray();
+			// On development enviroment,
+			// add an admin user for development purposes.
+			if ( 'dev' === $app_env && $admin_pass ) {
 
-			if ( ! $user_data ) {
-				$statement = $this->db->prepare(
-					'INSERT INTO "users" ("id", "username", "password", "role")
+				$results   = $this->db->query( 'SELECT * FROM "users" WHERE "username" = "admin"' );
+				$user_data = $results->fetchArray();
+
+				if ( ! $user_data ) {
+					$statement = $this->db->prepare(
+						'INSERT INTO "users" ("id", "username", "password", "role")
     				VALUES (:id, :username, :password, :role)'
-				);
-				$statement->bindValue( ':id', null );
-				$statement->bindValue( ':username', 'admin' );
-				$statement->bindValue( ':password', password_hash( 'admin', PASSWORD_BCRYPT ) );
-				$statement->bindValue( ':role', 'admin' );
-				$statement->execute();
+					);
+					$statement->bindValue( ':id', null );
+					$statement->bindValue( ':username', 'admin' );
+					$statement->bindValue( ':password', password_hash( $_ENV['ADMIN_PASS'], PASSWORD_BCRYPT ) );
+					$statement->bindValue( ':role', 'admin' );
+					$statement->execute();
+				}
 			}
 		} catch ( \Throwable $exception ) {
 			$this->logger->write( 'DB Error: ' . $exception->getMessage() );
