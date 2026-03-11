@@ -18,7 +18,7 @@ final class User {
 	private $cipher = 'aes-256-cbc';
 
 	public function __construct() {
-		$this->db = new \SQLite3( INC . 'db/db.sqlite' );
+		$this->db = new \SQLite3( DATA_DIR . 'db/db.sqlite' );
 	}
 
 

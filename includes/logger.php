@@ -12,7 +12,7 @@ namespace SweetHomeApp;
  */
 final class Logger {
 
-	private $logfile = INC . 'logs/error.log';
+	private $logfile = DATA_DIR . 'logs/error.log';
 
 	public function __construct() {
 		if ( ! file_exists( $this->logfile ) ) {
