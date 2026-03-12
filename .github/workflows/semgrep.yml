@@ -28,8 +28,6 @@ jobs:
     # If you are self-hosting, change the following `runs-on` value:
     runs-on: ubuntu-latest
 
-    environment: Actions
-
     container:
       # A Docker image with Semgrep installed. Do not change this.
       image: semgrep/semgrep
