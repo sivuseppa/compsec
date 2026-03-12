@@ -1,4 +1,4 @@
-# Compsec App
+# CompSec App
 
 ## Overview
 
