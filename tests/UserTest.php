@@ -17,7 +17,7 @@ require_once SRC_DIR . 'logger.php';
 require_once dirname( __DIR__, 1 ) . '/src/user.php';
 
 require_once SRC_DIR . 'dotenv/dotenv.php';
-new DotEnv( dirname( __DIR__, 1 ) . '/.env' )->load(); // Load .env file data to $_ENV superglobal.
+new DotEnv( dirname( __DIR__, 1 ) . '/.env.example' )->load(); // Load .env file data to $_ENV superglobal.
 
 
 final class UserTest extends TestCase {
