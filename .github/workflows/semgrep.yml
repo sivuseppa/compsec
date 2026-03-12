@@ -21,6 +21,10 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
 jobs:
   semgrep:
     # User definable name of this GitHub Actions job.
@@ -44,4 +48,4 @@ jobs:
           # Connect to Semgrep AppSec Platform through your SEMGREP_APP_TOKEN.
           # Generate a token from Semgrep AppSec Platform > Settings
           # and add it to your GitHub secrets.
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}always()
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
