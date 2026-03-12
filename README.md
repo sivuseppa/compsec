@@ -1,5 +1,7 @@
 # Compsec App
 
+## Overview
+
 This project is part of my exercise work for Secure Programming course in Tampere Univercity. It helps me understand...
 
 ## Prerequisites

@@ -19,8 +19,14 @@ final class User {
 	public $role   = 'viewer';
 	public $cipher = 'aes-256-cbc';
 
-	public function __construct() {
+	/**
+	 * Constuctor
+	 *
+	 * @param int $user_id The id of the user.
+	 */
+	public function __construct( $user_id = null ) {
 		$this->db = new SQLite3( DATA_DIR . 'db/db.sqlite' );
+		$this->id = $user_id;
 	}
 
 
@@ -158,8 +164,8 @@ final class User {
 
 		$is_valid_user = isset( $token_data['user_id'] )
 						&& intval( $token_data['user_id'] ) === intval( $this->id );
-		$cookietime    = isset( $token_data['timestamp'] ) ? $token_data['timestamp'] : '';
-		$timenow       = time();
+		$cookietime    = isset( $token_data['timestamp'] ) ? intval( $token_data['timestamp'] ) : '';
+		$timenow       = intval( time() );
 		$is_valid_time = ( $timenow - $cookietime ) < 3600; // Max login time is 1 hour.
 
 		return $is_valid_user && $is_valid_time;
