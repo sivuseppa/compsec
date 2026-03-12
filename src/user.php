@@ -2,10 +2,10 @@
 /**
  * The model of the User
  *
- * @package SweetHomeApp
+ * @package MMoro\CompSecApp
  */
 
-namespace SweetHomeApp;
+namespace MMoro\CompSecApp;
 
 use SQLite3;
 

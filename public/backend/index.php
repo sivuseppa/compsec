@@ -2,10 +2,10 @@
 /**
  * Backend API entry point
  *
- * @package SweetHomeApp
+ * @package MMoro\CompSecApp
  */
 
-namespace SweetHomeApp;
+namespace MMoro\CompSecApp;
 
 define( 'SRC_DIR', dirname( __DIR__, 2 ) . '/src/' );
 define( 'DATA_DIR', dirname( __DIR__, 2 ) . '/data/' );

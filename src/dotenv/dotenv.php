@@ -1,6 +1,6 @@
 <?php
 
-namespace SweetHomeApp;
+namespace MMoro\CompSecApp;
 
 final class DotEnv {
 

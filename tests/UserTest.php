@@ -1,6 +1,11 @@
 <?php
+/**
+ * Tests for User
+ *
+ * @package MMoro\CompSecApp
+ */
 
-namespace SweetHomeApp;
+namespace MMoro\CompSecApp;
 
 use PHPUnit\Framework\TestCase;
 use SQLite3;

@@ -2,10 +2,10 @@
 /**
  * Helper class to write a log.
  *
- * @package SweetHomeApp
+ * @package MMoro\CompSecApp
  */
 
-namespace SweetHomeApp;
+namespace MMoro\CompSecApp;
 
 /**
  * Class Logger
