@@ -15,6 +15,7 @@ define( 'DATA_DIR', dirname( __DIR__, 1 ) . '/data/' );
 
 require_once SRC_DIR . 'logger.php';
 require_once dirname( __DIR__, 1 ) . '/src/user.php';
+require_once dirname( __DIR__, 1 ) . '/src/app.php';
 
 require_once SRC_DIR . 'dotenv/dotenv.php';
 new DotEnv( dirname( __DIR__, 1 ) . '/.env.example' )->load(); // Load .env file data to $_ENV superglobal.
@@ -26,6 +27,7 @@ final class UserTest extends TestCase {
 	 * Test #1
 	 */
 	public function testSaveAndGetInitVector() {
+		new App();
 		$user        = new User( 1 );
 		$ivlen       = openssl_cipher_iv_length( $user->cipher );
 		$init_vector = openssl_random_pseudo_bytes( $ivlen );
@@ -38,6 +40,7 @@ final class UserTest extends TestCase {
 	 * Test #2
 	 */
 	public function testCreateAndValidateToken() {
+		new App();
 		$user  = new User( 1 );
 		$time  = time();
 		$token = $user->create_token( $time );
