@@ -54,12 +54,13 @@ final class App {
 				)'
 			);
 
-			$app_env    = isset( $_ENV['APP_ENV'] ) ? $_ENV['APP_ENV'] : '';
-			$admin_pass = isset( $_ENV['ADMIN_PASS'] ) ? $_ENV['ADMIN_PASS'] : '';
+			$app_env        = isset( $_ENV['APP_ENV'] ) ? $_ENV['APP_ENV'] : '';
+			$admin_username = isset( $_ENV['ADMIN_UNAME'] ) ? $_ENV['ADMIN_UNAME'] : '';
+			$admin_password = isset( $_ENV['ADMIN_PASS'] ) ? $_ENV['ADMIN_PASS'] : '';
 
 			// On development enviroment,
 			// add an admin user for development purposes.
-			if ( 'dev' === $app_env && $admin_pass ) {
+			if ( 'dev' === $app_env && $admin_username && $admin_password ) {
 
 				$results   = $this->db->query( 'SELECT * FROM "users" WHERE "username" = "admin"' );
 				$user_data = $results->fetchArray();
@@ -70,8 +71,8 @@ final class App {
     				VALUES (:id, :username, :password, :role)'
 					);
 					$statement->bindValue( ':id', null );
-					$statement->bindValue( ':username', 'admin' );
-					$statement->bindValue( ':password', password_hash( $_ENV['ADMIN_PASS'], PASSWORD_BCRYPT ) );
+					$statement->bindValue( ':username', $admin_username );
+					$statement->bindValue( ':password', password_hash( $admin_password, PASSWORD_BCRYPT ) );
 					$statement->bindValue( ':role', 'admin' );
 					$statement->execute();
 				}
