@@ -4,9 +4,13 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  issues: write
+
 jobs:
   run-zap-on-pull-request:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.fork == false
     steps:
       - name: ZAP Scan
         uses: zaproxy/action-baseline@v0.15.0
