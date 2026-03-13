@@ -1,4 +1,4 @@
-name: Run Zap Scan on Pull Request
+name: Run Zap Full Scan on Pull Request
 
 on:
   pull_request:
@@ -8,11 +8,11 @@ permissions:
   issues: write
 
 jobs:
-  run-zap-on-pull-request:
+  run-zap-full:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.fork == false
     steps:
-      - name: ZAP Scan
-        uses: zaproxy/action-baseline@v0.15.0
+      - name: ZAP Full
+        uses: zaproxy/action-full-scan@v0.13.0
         with:
           target: 'https://compsec.sivuseppa.dev'
