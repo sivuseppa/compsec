@@ -12,12 +12,12 @@ define( 'DATA_DIR', dirname( __DIR__, 2 ) . '/data/' );
 header( 'Content-Type: application/json' );
 
 require_once SRC_DIR . 'dotenv/dotenv.php';
-new DotEnv( dirname( __DIR__, 2 ) . '/.env' )->load(); // Load .env file data to $_ENV superglobal.
-
 require_once SRC_DIR . 'logger.php';
 require_once SRC_DIR . 'app.php';
 
 try {
+	new DotEnv( dirname( __DIR__, 2 ) . '/.env' )->load(); // Load .env file data to $_ENV superglobal.
+
 	$app = new App();
 
 	$request_method = $_SERVER['REQUEST_METHOD'];
