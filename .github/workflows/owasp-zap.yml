@@ -7,9 +7,6 @@ on:
 permissions:
   issues: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   run-zap-full:
     runs-on: ubuntu-latest
