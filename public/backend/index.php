@@ -52,7 +52,7 @@ try {
 		exit;
 	}
 
-	// Call app methods based on a action parameter.
+	// Call app methods based on an action parameter.
 	switch ( $request_method ) {
 		case 'GET':
 			if ( 'getUser' === $action ) {
@@ -61,6 +61,8 @@ try {
 				$app->get_assistant();
 			} elseif ( 'getAllAssistants' === $action ) {
 				$app->get_all_assistants();
+			} else {
+				throw new \Exception( 'Please check your action.' );
 			}
 			break;
 		case 'POST':
@@ -74,6 +76,8 @@ try {
 				$app->add_assistant();
 			} elseif ( 'editAssistant' === $action ) {
 				$app->edit_assistant();
+			} else {
+				throw new \Exception( 'Please check your action.' );
 			}
 			break;
 		default:
