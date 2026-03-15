@@ -1,4 +1,4 @@
-name: Run Zap Full Scan on Pull Request
+name: Run Zap Scans on Pull Request
 
 on:
   pull_request:
@@ -16,3 +16,11 @@ jobs:
         uses: zaproxy/action-full-scan@v0.13.0
         with:
           target: ${{ vars.TEST_SITE_URL }}
+  run-zap-api:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.fork == false
+    steps:
+      - name: ZAP API
+        uses: zaproxy/action-api-scan@v0.10.0
+        with:
+          target: ${{ vars.TEST_SITE_BACKEND_URL }}
