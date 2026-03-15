@@ -1,4 +1,4 @@
-name: Run Zap API Scan on Pull Request
+name: Run Zap APi Scan on Pull Request
 
 on:
   pull_request:
