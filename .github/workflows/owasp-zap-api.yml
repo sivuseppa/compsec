@@ -1,0 +1,18 @@
+name: Run Zap API Scan on Pull Request
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  issues: write
+
+jobs:
+  run-zap-api:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.fork == false
+    steps:
+      - name: ZAP API
+        uses: zaproxy/action-api-scan@v0.10.0
+        with:
+          target: ${{ vars.TEST_SITE_BACKEND_URL }}
