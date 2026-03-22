@@ -11,6 +11,7 @@ define( 'SRC_DIR', dirname( __DIR__, 2 ) . '/src/' );
 define( 'DATA_DIR', dirname( __DIR__, 2 ) . '/data/' );
 header( 'Content-Type: application/json' );
 
+require_once SRC_DIR . 'functions.php';
 require_once SRC_DIR . 'dotenv/dotenv.php';
 require_once SRC_DIR . 'logger.php';
 require_once SRC_DIR . 'app.php';
@@ -18,49 +19,40 @@ require_once SRC_DIR . 'app.php';
 try {
 	new DotEnv( dirname( __DIR__, 2 ) . '/.env' )->load(); // Load .env file data to $_ENV superglobal.
 
-	$app = new App();
-
-	$request_method = $_SERVER['REQUEST_METHOD'];
-
+	$app    = new App();
+	$method = $_SERVER['REQUEST_METHOD'];
 	$data   = null;
 	$action = null;
 
+	// new Logger()->write( $app->get_users() );
+
 	// Get action parameters and POST data.
-	if ( 'POST' === $request_method ) {
+	if ( 'POST' === $method ) {
 		$json   = file_get_contents( 'php://input' );
 		$data   = json_decode( $json );
 		$action = isset( $data->action ) ? $data->action : '';
 
-		// Login or Create account are only actions allowed without authentication.
+		// Login is only action allowed without authentication.
 		if ( 'login' === $action ) {
 			$app->user->login( $data );
 		}
-	} elseif ( 'GET' === $request_method ) {
+	} elseif ( 'GET' === $method ) {
 		$action = isset( $_GET['action'] ) ? $_GET['action'] : '';
 	}
 
 	// Stop unauthenticated execution here.
 	if ( ! $app->user->is_logged_in() ) {
 		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
-		http_response_code( 401 );
-		echo json_encode(
-			array(
-				'status'  => 'error 1',
-				'message' => 'unauthorized',
-			)
-		);
-		exit;
+		send_response_and_exit( 401, 'error', 'unauthorized' );
 	}
 
 	// Call app methods based on an action parameter.
-	switch ( $request_method ) {
+	switch ( $method ) {
 		case 'GET':
 			if ( 'getUser' === $action ) {
 				$app->get_user();
-			} elseif ( 'getAssistant' === $action ) {
-				$app->get_assistant();
-			} elseif ( 'getAllAssistants' === $action ) {
-				$app->get_all_assistants();
+			} elseif ( 'getUsers' === $action ) {
+				$app->return_userdata();
 			} else {
 				throw new \Exception( 'Please check your action.' );
 			}
@@ -68,29 +60,19 @@ try {
 		case 'POST':
 			if ( 'logout' === $action ) {
 				$app->user->logout();
-			} elseif ( 'addUser' === $action ) {
-				$app->user->add( $data );
-			} elseif ( 'editUser' === $action ) {
-				$app->edit_user();
-			} elseif ( 'addAssistant' === $action ) {
-				$app->add_assistant();
-			} elseif ( 'editAssistant' === $action ) {
-				$app->edit_assistant();
+			} elseif ( 'saveUser' === $action ) {
+				$app->save_user( $data );
 			} else {
 				throw new \Exception( 'Please check your action.' );
 			}
 			break;
 		default:
-			break;
+			throw new \Exception( 'Please check your method.' );
 	}
 } catch ( \Throwable $exception ) {
 	new Logger()->write( $exception->getMessage() );
-	http_response_code( 500 );
-	echo json_encode(
-		array(
-			'status'  => 'error',
-			'message' => '#1',
-		)
-	);
-	exit;
+	// $app->user->logout();
+	send_response_and_exit( 500, 'error', $exception->getMessage() );
 }
+
+send_response_and_exit( 401, '0', 'unauthorized' );
