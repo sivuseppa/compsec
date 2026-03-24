@@ -3,103 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home Sweet App</title>
+  <title>CompSecApp</title>
   <link href="style.css" rel="stylesheet" />
-  <script type="module">
-
-    import { createApp } from 'https://unpkg.com/petite-vue?module';
-
-    const fetchUserId = () => {
-      const cookieValue = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('HSA_TOKEN='))
-        ?.split('=')[1];
-      const userId = cookieValue?.split('_')[0];
-      return userId;
-    }
-
-
-
-    const pages = {
-      1: {
-        title: 'Dashboard',
-        description: 'Dashboard content goes here.'
-      },
-      2: {
-        title: 'Home Assistans',
-        description: 'Home Assistans content goes here.'
-      },
-      3: {
-        title: 'Users',
-        description: 'Users content goes here.'
-      },
-      4: {
-        title: 'Settings',
-        description: 'Settings content goes here.'
-      },
-    }
-
-    createApp({
-      apiUrl: /backend/,
-      isLoggedIn: fetchUserId(),
-      username: '',
-      password: '',
-      page: pages[1],
-      users: [],
-      newUser: { id: 0, username: '', password: '', role: 'user' },
-
-      async setPage(num) {
-        this.page = pages[num];
-        if (num == 3 && this.users?.length == 0) {
-          this.fetchUsers();
-        }
-      },
-
-      async login(e) {
-        const response = await fetch(this.apiUrl, {
-          method: 'POST',
-          body: JSON.stringify({ username: this.username, password: this.password, action: 'login' }),
-        });
-        const data = await response.json();
-        this.isLoggedIn = fetchUserId();
-        this.username = '';
-        this.password = '';
-      },
-
-      async logout() {
-        console.log('logout');
-        const response = await fetch(this.apiUrl, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'logout' }),
-        });
-        this.isLoggedIn = fetchUserId();
-      },
-
-      async fetchUsers() {
-        const response = await fetch(this.apiUrl + '?action=getUsers');
-        const data = await response.json();
-        this.users = [...data.message];
-      },
-
-      async saveUser() {
-        const response = await fetch(this.apiUrl, {
-          method: 'POST',
-          body: JSON.stringify(
-            { ...this.newUser, action: 'saveUser' },
-          ),
-        });
-        this.fetchUsers();
-      }
-
-    }).mount('#app')
-
-  </script>
 </head>
-
 <body id="app" v-cloak>
 
   <header class="main">
-    <h1>Home Sweet App</h1>
+    <h1>CompSecApp</h1>
     <button @click="logout" class="logoutbutton button" v-if="isLoggedIn">Logout</button>
   </header>
 
@@ -111,56 +21,18 @@
   </nav>
 
   <!-- Login form -->
-  <form @submit.prevent="login" id="loginform" class="loginform" v-if="!isLoggedIn">
-    <label>
-      <small>Username</small>
-      <input id="username" name="username" type="text" v-model="username" required />
-    </label>
-    <label>
-      <small>Password</small>
-      <input type="password" id="password" name="password" type="text" v-model="password" required />
-    </label>
-    <button class="button">Login</button>
-  </form>
+  <login v-if="!isLoggedIn" v-model="isLoggedIn"></login>
 
   <main v-if="isLoggedIn">
     <header>
       <h2>{{ page.title }}</h2>
     </header>
+    <notice></notice>
     <section>
       <p>{{ page.description }}</p>
 
       <!-- Users -->
-      <div id="usersPage" v-if="page.title == 'Users'">
-        <div v-for="user in users">
-          <span>User ID: {{ user.id }}</span><span> Name: {{ user.username }}</span>
-        </div>
-
-        <form @submit.prevent="saveUser" id="saveUserForm" class="saveUserForm">
-          <!-- <label>
-            <small>ID</small>
-            <input id="newuUserId" name="newuUserId" type="text" v-model="newUser.id" required />
-          </label> -->
-          <label>
-            <small>Username</small>
-            <input id="newuUsername" name="newuUsername" type="text" v-model="newUser.username" required />
-          </label>
-          <label>
-            <small>Username</small>
-            <select name="newUserRole" id="newUserRole" v-model="newUser.role">
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </label>
-          <label>
-            <small>Password</small>
-            <input type="newPassword" id="newPassword" name="newPassword" type="text" v-model="newUser.password"
-              required />
-          </label>
-          <button class="button">Save new user</button>
-        </form>
-        <!-- <button @click="addUserTest">increment</button> -->
-      </div>
+      <users v-if="page.title == 'Users'"></users>
 
 
     </section>
@@ -169,5 +41,12 @@
   <footer>
     <p>&copy; 2026</p>
   </footer>
+
+  <script type="module">
+    import { createApp, ref, reactive } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+    import App from './components/app.js'
+
+    createApp(App).mount('#app')
+  </script>
 </body>
 </html>

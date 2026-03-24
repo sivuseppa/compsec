@@ -24,8 +24,6 @@ try {
 	$data   = null;
 	$action = null;
 
-	// new Logger()->write( $app->get_users() );
-
 	// Get action parameters and POST data.
 	if ( 'POST' === $method ) {
 		$json   = file_get_contents( 'php://input' );
@@ -43,7 +41,7 @@ try {
 	// Stop unauthenticated execution here.
 	if ( ! $app->user->is_logged_in() ) {
 		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
-		send_response_and_exit( 401, 'error', 'unauthorized' );
+		send_response_and_exit( 401, 'error', 'Unauthorized.' );
 	}
 
 	// Call app methods based on an action parameter.
@@ -60,8 +58,12 @@ try {
 		case 'POST':
 			if ( 'logout' === $action ) {
 				$app->user->logout();
+			} elseif ( 'addUser' === $action ) {
+				$app->add_user( $data );
 			} elseif ( 'saveUser' === $action ) {
 				$app->save_user( $data );
+			} elseif ( 'deleteUser' === $action ) {
+				$app->delete_user( $data );
 			} else {
 				throw new \Exception( 'Please check your action.' );
 			}
@@ -71,8 +73,7 @@ try {
 	}
 } catch ( \Throwable $exception ) {
 	new Logger()->write( $exception->getMessage() );
-	// $app->user->logout();
-	send_response_and_exit( 500, 'error', $exception->getMessage() );
+	send_response_and_exit( 500, 'error', 'System error.' );
 }
 
-send_response_and_exit( 401, '0', 'unauthorized' );
+send_response_and_exit( 401, 'error', 'Unauthorized.' );

@@ -46,6 +46,7 @@ button {
   border: none;
   font-family: "Inter", sans-serif;
   color: var(--main-color);
+  white-space: nowrap;
 }
 
 button:hover {
@@ -97,6 +98,7 @@ nav .nav-item:hover {
 
 main {
   min-height: calc(100vh - 8rem);
+  overflow-y: auto;
 }
 
 footer {
@@ -116,7 +118,7 @@ footer p {
   }
 }
 
-/* Login form */
+/* Forms */
 
 .loginform {
   grid-column: 1 /-1;
@@ -133,15 +135,67 @@ footer p {
   border-radius: 0.5rem;
 }
 
-.loginform label {
+.saveUserForm {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+label {
   display: flex;
   flex-direction: column;
   gap: 0.1em;
 }
 
-.loginform input {
+input,
+select {
   padding: 0.5em;
   border-radius: 0.3em;
   border: 1px solid var(--button-hover-bg-color);
   border-radius: 0.3em;
+}
+
+/* Table */
+
+thead {
+  font-weight: bold;
+}
+
+td {
+  border-bottom: 1px solid var(--button-hover-bg-color);
+  border-collapse: collapse;
+  padding: 0.5em 1em;
+}
+
+/* Card */
+
+.card {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--button-hover-bg-color);
+  background-color: #eeeeee;
+  border-radius: 0.5em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Notice */
+.notice-wrapper {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-left: 5px solid;
+}
+
+.notice-wrapper.success {
+  border-left-color: green;
+}
+
+.notice-wrapper.forbidden {
+  border-left-color: orange;
+}
+
+.notice-wrapper.error {
+  border-left-color: red;
 }

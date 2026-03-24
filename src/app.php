@@ -8,7 +8,12 @@
 namespace MMoro\CompSecApp;
 
 use SQLite3;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
+require_once SRC_DIR . 'phpmailer/src/Exception.php';
+require_once SRC_DIR . 'phpmailer/src/PHPMailer.php';
+require_once SRC_DIR . 'phpmailer/src/SMTP.php';
 require_once SRC_DIR . 'user.php';
 
 /**
@@ -19,11 +24,13 @@ final class App {
 	private $db;
 	public $user;
 	public $logger;
+	public $mail;
 
 	public function __construct() {
 		$this->logger = new Logger();
 		$this->init_db();
 		$this->init_user();
+		$this->init_mailer();
 	}
 
 	private function init_db() {
@@ -39,6 +46,7 @@ final class App {
 				'CREATE TABLE IF NOT EXISTS "users" (
 					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 					"username" VARCHAR,
+					"email" VARCHAR,
 					"password" VARCHAR,
 					"role" VARCHAR,
 					"iv" VARCHAR
@@ -91,6 +99,23 @@ final class App {
 	}
 
 	/**
+	 * Init mailer
+	 */
+	private function init_mailer() {
+		$this->mail = new PHPMailer( true );
+		// Mail server settings.
+		$this->mail->isSMTP();
+		$this->mail->SMTPDebug  = 2;                                         // Send using SMTP
+		$this->mail->Host       = $_ENV['SMTP_HOST'];                     // Set the SMTP server to send through
+		$this->mail->SMTPAuth   = true;                                   // Enable SMTP authentication
+		$this->mail->Username   = $_ENV['SMTP_USERNAME'];               // SMTP username
+		$this->mail->Password   = $_ENV['SMTP_PASS'];                        // SMTP password
+		$this->mail->SMTPSecure = 'tls'; // Enable TLS encryption
+		$this->mail->Port       = $_ENV['SMTP_PORT'];
+		$this->mail->Mailer     = 'smtp';
+	}
+
+	/**
 	 * Return backend API description.
 	 */
 	function return_api_description() {
@@ -102,7 +127,7 @@ final class App {
 	public function return_userdata() {
 
 		if ( ! $this->user->is_admin() ) {
-			send_response_and_exit( 401, 'error', 'unauthorized' );
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
 
 		send_response_and_exit( 200, 'success', $this->get_users_data() );
@@ -113,43 +138,146 @@ final class App {
 	 */
 	private function get_users_data() {
 		$results_arr = array();
-		$results     = $this->db->query( 'SELECT id, username, role FROM "users"' );
+		$results     = $this->db->query( 'SELECT id, username, email, role FROM "users"' );
 		while ( $result = $results->fetchArray( SQLITE3_ASSOC ) ) {
 			$results_arr[] = $result;
 		}
-		new Logger()->write( $results_arr );
+		// new Logger()->write( $results_arr );
 		return $results_arr;
 	}
 
 	/**
-	 * Save userdata or create new user.
+	 * Add new user to the system. Make sure that the post data is valid to use on user creation.
+	 *
+	 * @param object $post_data the post data.
+	 */
+	public function add_user( $post_data ) {
+
+		if ( isset( $post_data->id ) ) {
+			send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
+		}
+
+		if ( isset( $post_data->email ) && $this->get_user_id_by_email( $post_data->email ) ) {
+			send_response_and_exit( 403, 'forbidden', 'Wrong email.' );
+		}
+
+		if ( isset( $post_data->username ) && $this->get_user_id_by_username( $post_data->username ) ) {
+			send_response_and_exit( 403, 'forbidden', 'Wrong username.' );
+		}
+
+		$this->save_user( $post_data );
+	}
+
+	/**
+	 * Save userdata.
+	 *
+	 * @param object $post_data the post data.
 	 */
 	public function save_user( $post_data ) {
 
-		$user_id  = isset( $post_data->id ) && $post_data->id ? intval( $post_data->id ) : null;
-		$username = isset( $post_data->username ) ? $post_data->username : '';
+		$user_id  = isset( $post_data->id ) && intval( $post_data->id ) ? intval( $post_data->id ) : null;
+		$username = isset( $post_data->username ) ? sanitize_str( $post_data->username ) : '';
+		$email    = isset( $post_data->email ) ? sanitize_email( $post_data->email ) : '';
 		$password = isset( $post_data->password ) ? $post_data->password : '';
-		$role     = isset( $post_data->role ) ? $post_data->role : '';
+		$role     = isset( $post_data->role ) ? validate_role( $post_data->role ) : '';
 
-		if ( ! $username || ! $password || ! $role ) {
-			send_response_and_exit( 403, 'forbidden', 'missing data' );
+		if ( ! $username || ! $password || ! $role || ! $email ) {
+			send_response_and_exit( 403, 'forbidden', 'Missing data.' );
 		}
 
 		if ( 'admin' === $role && ! $this->user->is_admin() ) {
-			send_response_and_exit( 401, 'error', 'unauthorized' );
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
 
+		// User can save only own data, admin can save others data too.
 		if ( $user_id === $this->user->id || $this->user->is_admin() ) {
 
 			$user           = new User( $user_id );
 			$user->username = $username;
+			$user->email    = $email;
 			$user->password = $password;
+
+			if ( $this->user->is_admin() ) {
+				$user->role = $role;
+			}
+
+			$user->save();
+		} else {
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
+		}
+	}
+
+	/**
+	 * Delete user
+	 *
+	 * @param object $post_data the post data.
+	 */
+	public function delete_user( $post_data ) {
+		$user_id = isset( $post_data->id ) && $post_data->id ? intval( $post_data->id ) : null;
+
+		if ( ! $user_id ) {
+			send_response_and_exit( 403, 'forbidden', 'Missing data.' );
 		}
 
-		if ( $this->user->is_admin() ) {
-			$user->role = $role;
+		if ( ! $this->user->is_admin() ) {
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
 
-		$user->save();
+		$user = new User( $user_id );
+		$user->delete();
+	}
+
+	/**
+	 * Get user by email
+	 *
+	 * @param string $email the email fo the user.
+	 * @return int|bool user id on success, false on fail.
+	 */
+	private function get_user_id_by_email( $email ) {
+		$email = sanitize_email( $email );
+
+		$statement = $this->db->prepare(
+			'SELECT id FROM users
+			WHERE email = :email'
+		);
+		$statement->bindValue( ':email', $email );
+		$result = $statement->execute();
+		$data   = $result->fetchArray( SQLITE3_ASSOC );
+
+		$this->logger->write( $data );
+
+		if ( isset( $data['id'] ) && $data['id'] ) {
+			$this->logger->write( $data['id'] );
+			return $data['id'];
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Get user by username
+	 *
+	 * @param string $username the username fo the user.
+	 * @return int|bool user id on success, false on fail.
+	 */
+	private function get_user_id_by_username( $username ) {
+		$username = sanitize_str( $username );
+
+		$statement = $this->db->prepare(
+			'SELECT id FROM users
+			WHERE username = :username'
+		);
+		$statement->bindValue( ':username', $username );
+		$result = $statement->execute();
+		$data   = $result->fetchArray( SQLITE3_ASSOC );
+
+		// $this->logger->write( $data );
+
+		if ( isset( $data['id'] ) && $data['id'] ) {
+			// $this->logger->write( $data['id'] );
+			return $data['id'];
+		} else {
+			return false;
+		}
 	}
 }

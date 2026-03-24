@@ -15,7 +15,10 @@ use SQLite3;
 final class User {
 
 	private $db;
-	public $id     = null;
+	public $id = null;
+	public $username;
+	public $password;
+	public $email;
 	public $role   = '';
 	public $cipher = 'aes-256-cbc';
 
@@ -32,23 +35,45 @@ final class User {
 
 	/**
 	 * Save userdata to the database.
-	 *
-	 * @param Object $data POST data.
 	 */
 	public function save() {
 
 		// Insert potentially unsafe data with a prepared statement and named parameters.
-		$statement = $this->db->prepare(
-			'INSERT INTO "users" ("id", "username", "password", "role")
-			VALUES (:id, :username, :password, :role)'
-		);
+		if ( $this->id ) {
+			$statement = $this->db->prepare(
+				'UPDATE users 
+				SET username = :username, email = :email, password = :password, role = :role
+				WHERE id = :id'
+			);
+		} else {
+			$statement = $this->db->prepare(
+				'INSERT INTO users ("id", email, "username", "password", "role")
+				VALUES (:id, :email, :username, :password, :role)'
+			);
+		}
+
 		$statement->bindValue( ':id', $this->id );
 		$statement->bindValue( ':username', $this->username );
+		$statement->bindValue( ':email', $this->email );
 		$statement->bindValue( ':password', password_hash( $this->password, PASSWORD_BCRYPT ) );
 		$statement->bindValue( ':role', $this->role );
 		$statement->execute();
 
-		send_response_and_exit( 201, 'success', 'user added' );
+		send_response_and_exit( 200, 'success', 'User saved.' );
+	}
+
+
+	/**
+	 * Delete user.
+	 */
+	public function delete() {
+		$statement = $this->db->prepare(
+			'DELETE FROM "users"
+			WHERE id = :id'
+		);
+		$statement->bindValue( ':id', $this->id );
+		$statement->execute();
+		send_response_and_exit( 200, 'success', 'User deleted.' );
 	}
 
 
@@ -98,7 +123,7 @@ final class User {
 				$this->id . '_' . $this->create_token( $time ),
 				$options
 			);
-			send_response_and_exit( 200, 'success', 'logged in' );
+			send_response_and_exit( 200, 'success', 'Logged in.' );
 
 		} else {
 			throw new \Exception( 'Unauthorized.' );
@@ -231,6 +256,6 @@ final class User {
 	 */
 	public function logout() {
 		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
-		send_response_and_exit( 200, 'success', 'logged out' );
+		send_response_and_exit( 200, 'success', 'Logged out.' );
 	}
 }
