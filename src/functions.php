@@ -65,3 +65,25 @@ function validate_role( $role ) {
 		throw new Exception( 'Invalid role' );
 	}
 }
+
+/**
+ * Validate password
+ *
+ * @param string $password to validate.
+ * @throws Exception If validation fails.
+ */
+function validate_password( $password ) {
+
+	$uppercase     = preg_match( '@[A-Z]@', $password );
+	$lowercase     = preg_match( '@[a-z]@', $password );
+	$number        = preg_match( '@[0-9]@', $password );
+	$special_chars = preg_match( '@[^\w]@', $password );
+
+	$is_valid = $uppercase && $lowercase && $number && $special_chars && strlen( $password ) >= 8;
+
+	if ( $is_valid ) {
+		return true;
+	} else {
+		throw new Exception( 'Password should be at least 8 characters in length, should include at least one upper case letter, one number and one special character.' );
+	}
+}

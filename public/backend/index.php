@@ -30,6 +30,8 @@ try {
 		$data   = json_decode( $json );
 		$action = isset( $data->action ) ? $data->action : '';
 
+		new Logger()->write( $data );
+
 		// Login is only action allowed without authentication.
 		if ( 'login' === $action ) {
 			$app->user->login( $data );
@@ -47,8 +49,8 @@ try {
 	// Call app methods based on an action parameter.
 	switch ( $method ) {
 		case 'GET':
-			if ( 'getUser' === $action ) {
-				$app->get_user();
+			if ( 'getCurrentUser' === $action ) {
+				$app->get_current_user();
 			} elseif ( 'getUsers' === $action ) {
 				$app->return_userdata();
 			} else {

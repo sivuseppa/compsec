@@ -116,10 +116,12 @@ final class App {
 	}
 
 	/**
-	 * Return backend API description.
+	 * Return data of the current user.
 	 */
-	function return_api_description() {
+	public function get_current_user() {
+		send_response_and_exit( 200, 'success', $this->user->get_userdata() );
 	}
+
 
 	/**
 	 * Return user data for admin users.
@@ -129,7 +131,6 @@ final class App {
 		if ( ! $this->user->is_admin() ) {
 			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
-
 		send_response_and_exit( 200, 'success', $this->get_users_data() );
 	}
 
@@ -175,11 +176,17 @@ final class App {
 	 */
 	public function save_user( $post_data ) {
 
-		$user_id  = isset( $post_data->id ) && intval( $post_data->id ) ? intval( $post_data->id ) : null;
-		$username = isset( $post_data->username ) ? sanitize_str( $post_data->username ) : '';
-		$email    = isset( $post_data->email ) ? sanitize_email( $post_data->email ) : '';
-		$password = isset( $post_data->password ) ? $post_data->password : '';
-		$role     = isset( $post_data->role ) ? validate_role( $post_data->role ) : '';
+		try {
+
+			$user_id  = isset( $post_data->id ) && intval( $post_data->id ) ? intval( $post_data->id ) : null;
+			$username = isset( $post_data->username ) ? sanitize_str( $post_data->username ) : '';
+			$email    = isset( $post_data->email ) ? sanitize_email( $post_data->email ) : '';
+			$password = isset( $post_data->password ) ? validate_password( $post_data->password ) : '';
+			$role     = isset( $post_data->role ) ? validate_role( $post_data->role ) : '';
+
+		} catch ( \Throwable $exception ) {
+			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
+		}
 
 		if ( ! $username || ! $password || ! $role || ! $email ) {
 			send_response_and_exit( 403, 'forbidden', 'Missing data.' );

@@ -33,6 +33,7 @@ export default {
     console.log(store);
   },
   template: `<div id="usersPage">
+              <add-user></add-user>
               <table class="card">
                 <thead>
                   <tr>
@@ -41,14 +42,13 @@ export default {
                     <td>Email</td>
                     <td>Role</td>
                     <td>New password</td>
-                    <td>Edit</td>
-                    <td>Delete</td>
+                    <td></td>
+                    <td></td>
                   </tr>
                 </thead>
                 <tbody>
                   <user v-for="user in store.users" :user="user" :key="user.id"></user>
                 </tbody>
               </table>
-              <add-user></add-user>
             </div>`,
 };

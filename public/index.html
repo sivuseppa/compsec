@@ -10,30 +10,25 @@
 
   <header class="main">
     <h1>CompSecApp</h1>
-    <button @click="logout" class="logoutbutton button" v-if="isLoggedIn">Logout</button>
+    <div class="logout-wrapper">
+      <avatar></avatar>
+      <button @click="logout" class="logoutbutton button" v-if="store.isLoggedIn">Logout</button>
+    </div>
   </header>
+  <!-- Navigation -->
+  <navigation v-if="store.isLoggedIn"></navigation>
+  <!-- Login -->
+  <login v-if="!store.isLoggedIn"></login>
 
-  <nav v-if="isLoggedIn">
-    <div class="nav-item button" @click="setPage(1)">Dashboard</div>
-    <div class="nav-item button" @click="setPage(2)">Home Assistants</div>
-    <div class="nav-item button" @click="setPage(3)">Users</div>
-    <div class="nav-item button" @click="setPage(4)">Settings</div>
-  </nav>
-
-  <!-- Login form -->
-  <login v-if="!isLoggedIn" v-model="isLoggedIn"></login>
-
-  <main v-if="isLoggedIn">
+  <main v-if="store.isLoggedIn">
     <header>
-      <h2>{{ page.title }}</h2>
+      <h2>{{ store.currentPage.title }}</h2>
     </header>
     <notice></notice>
     <section>
-      <p>{{ page.description }}</p>
-
+      <p>{{ store.currentPage.description }}</p>
       <!-- Users -->
-      <users v-if="page.title == 'Users'"></users>
-
+      <users v-if="store.currentPage.title == 'Users'"></users>
 
     </section>
   </main>

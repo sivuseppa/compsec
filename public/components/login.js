@@ -1,26 +1,29 @@
+import { store } from './store.js';
+
 export default {
   props: ['modelValue'],
   emits: ['update:modelValue'],
 
   data() {
     return {
-      apiUrl: /backend/,
+      store,
       username: '',
       password: '',
     };
   },
   methods: {
-    isloggedIn() {
-      const cookieValue = document.cookie.split('; ').find((row) => row.startsWith('HSA_TOKEN='));
-      return cookieValue ? true : false;
-    },
+    // isloggedIn() {
+    //   const cookieValue = document.cookie.split('; ').find((row) => row.startsWith('HSA_TOKEN='));
+    //   return cookieValue ? true : false;
+    // },
     async login(e) {
-      const response = await fetch(this.apiUrl, {
+      const response = await fetch(store.apiUrl, {
         method: 'POST',
         body: JSON.stringify({ username: this.username, password: this.password, action: 'login' }),
       });
       const data = await response.json();
-      this.$emit('update:modelValue', this.isloggedIn());
+      // this.$emit('update:modelValue', this.isloggedIn());
+      store.setIsloggedIn();
       this.username = '';
       this.password = '';
     },

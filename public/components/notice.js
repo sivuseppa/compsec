@@ -1,5 +1,4 @@
 import { store } from './store.js';
-// import User from './user.js';
 
 export default {
   props: {},
@@ -19,6 +18,8 @@ export default {
   template: `
             <div v-if="store.notice.content" :class="getClass()">
               <span>{{store.notice.content}}</span>
-              <button @click="close">X</button>
+              <button class="rounded-icon" @click="close">
+                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#ffffff"><path d="m291-240-51-51 189-189-189-189 51-51 189 189 189-189 51 51-189 189 189 189-51 51-189-189-189 189Z"/></svg>
+              </button>
             </div>`,
 };

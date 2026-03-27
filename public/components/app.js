@@ -1,6 +1,9 @@
+import { store } from './store.js';
 import Users from './users.js';
 import Login from './login.js';
 import Notice from './notice.js';
+import Avatar from './avatar.js';
+import Navigation from './navigation.js';
 
 const fetchUserId = () => {
   const cookieValue = document.cookie
@@ -11,59 +14,32 @@ const fetchUserId = () => {
   return userId;
 };
 
-const pages = {
-  1: {
-    title: 'Dashboard',
-    description: 'Dashboard content goes here.',
-  },
-  2: {
-    title: 'Home Assistans',
-    description: 'Home Assistans content goes here.',
-  },
-  3: {
-    title: 'Users',
-    description: 'Users content goes here.',
-  },
-  4: {
-    title: 'Settings',
-    description: 'Settings content goes here.',
-  },
-};
-
 export default {
   components: {
     Users,
     Login,
     Notice,
+    Avatar,
+    Navigation,
   },
   data() {
     return {
-      apiUrl: /backend/,
-      isLoggedIn: false,
-      page: pages[1],
+      store,
     };
   },
 
   methods: {
-    setIsloggedIn() {
-      const cookieValue = document.cookie.split('; ').find((row) => row.startsWith('HSA_TOKEN='));
-      this.isLoggedIn = cookieValue ? true : false;
-    },
-
-    async setPage(num) {
-      this.page = pages[num];
-    },
-
     async logout() {
       console.log('logout');
-      const response = await fetch(this.apiUrl, {
+      const response = await fetch(store.apiUrl, {
         method: 'POST',
         body: JSON.stringify({ action: 'logout' }),
       });
-      this.setIsloggedIn();
+      store.setIsloggedIn();
     },
   },
   mounted() {
-    this.setIsloggedIn();
+    store.setIsloggedIn();
+    store.setPage();
   },
 };

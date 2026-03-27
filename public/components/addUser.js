@@ -12,7 +12,7 @@ export default {
     };
   },
   methods: {
-    async saveUser() {
+    async addUser() {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         body: JSON.stringify({ ...this.newUser, action: 'addUser' }),
@@ -30,7 +30,7 @@ export default {
   template: `
             <div>
               <button @click="toggleIsOpen">{{ isOpen ? 'Close' : 'Add new user' }}</button>
-              <form v-if="isOpen" @submit.prevent="saveUser" id="saveUserForm" class="saveUserForm card">
+              <form v-if="isOpen" @submit.prevent="addUser" id="saveUserForm" class="saveUserForm card">
                 <label>
                   <small>Email</small>
                   <input id="newuUserEmail" name="newuUserEmail" type="email" v-model="newUser.email" />

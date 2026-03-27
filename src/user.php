@@ -34,6 +34,31 @@ final class User {
 
 
 	/**
+	 * Return userdata.
+	 */
+	public function get_userdata() {
+
+		if ( ! $this->username ) {
+			$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
+			$statement->bindValue( 1, $this->id );
+			$result    = $statement->execute();
+			$user_data = $result->fetchArray( SQLITE3_ASSOC );
+
+			$this->username = $user_data['username'];
+			$this->email    = $user_data['email'];
+			$this->role     = $user_data['role'];
+		}
+
+		return array(
+			'id'       => $this->id,
+			'username' => $this->username,
+			'email'    => $this->email,
+			'role'     => $this->role,
+		);
+	}
+
+
+	/**
 	 * Save userdata to the database.
 	 */
 	public function save() {
