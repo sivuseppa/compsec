@@ -154,19 +154,23 @@ final class App {
 	 */
 	public function add_user( $post_data ) {
 
-		if ( isset( $post_data->id ) ) {
-			send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
-		}
+		try {
 
-		if ( isset( $post_data->email ) && $this->get_user_id_by_email( $post_data->email ) ) {
-			send_response_and_exit( 403, 'forbidden', 'Wrong email.' );
-		}
+			if ( isset( $post_data->id ) ) {
+				send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
+			}
+			if ( isset( $post_data->email ) && $this->get_user_id_by_email( $post_data->email ) ) {
+				send_response_and_exit( 403, 'forbidden', 'Try another email.' );
+			}
+			if ( isset( $post_data->username ) && $this->get_user_id_by_username( $post_data->username ) ) {
+				send_response_and_exit( 403, 'forbidden', 'Try another username.' );
+			}
 
-		if ( isset( $post_data->username ) && $this->get_user_id_by_username( $post_data->username ) ) {
-			send_response_and_exit( 403, 'forbidden', 'Wrong username.' );
-		}
+			$this->save_user( $post_data );
 
-		$this->save_user( $post_data );
+		} catch ( \Throwable $exception ) {
+			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
+		}
 	}
 
 	/**
