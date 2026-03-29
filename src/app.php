@@ -185,8 +185,8 @@ final class App {
 			$user_id  = isset( $post_data->id ) && intval( $post_data->id ) ? intval( $post_data->id ) : null;
 			$username = isset( $post_data->username ) ? sanitize_str( $post_data->username ) : '';
 			$email    = isset( $post_data->email ) ? sanitize_email( $post_data->email ) : '';
-			$password = isset( $post_data->password ) ? validate_password( $post_data->password ) : '';
-			$role     = isset( $post_data->role ) ? validate_role( $post_data->role ) : '';
+			$password = isset( $post_data->password ) && is_valid_password( $post_data->password ) ? $post_data->password : '';
+			$role     = isset( $post_data->role ) ? sanitize_role( $post_data->role ) : '';
 
 		} catch ( \Throwable $exception ) {
 			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );

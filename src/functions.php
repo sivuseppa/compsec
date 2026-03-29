@@ -49,12 +49,12 @@ function sanitize_str( $input ) {
 }
 
 /**
- * Validate user role
+ * Validate and sanitize user role
  *
  * @param string $role to sanitize and validate.
  * @throws Exception If validation fails.
  */
-function validate_role( $role ) {
+function sanitize_role( $role ) {
 	$role = sanitize_str( $role );
 
 	$is_valid = in_array( $role, array( 'admin', 'user' ), true );
@@ -67,12 +67,12 @@ function validate_role( $role ) {
 }
 
 /**
- * Validate password
+ * Check if the password is valid.
  *
  * @param string $password to validate.
  * @throws Exception If validation fails.
  */
-function validate_password( $password ) {
+function is_valid_password( $password ) {
 
 	$uppercase     = preg_match( '@[A-Z]@', $password );
 	$lowercase     = preg_match( '@[a-z]@', $password );

@@ -84,6 +84,13 @@ final class User {
 		$statement->bindValue( ':role', $this->role );
 		$statement->execute();
 
+		// Test how userdata is saved, remove this!!!
+		$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
+		$statement->bindValue( 1, $this->id );
+		$result    = $statement->execute();
+		$user_data = $result->fetchArray( SQLITE3_ASSOC );
+		new Logger()->write( $user_data );
+
 		send_response_and_exit( 200, 'success', 'User saved.' );
 	}
 

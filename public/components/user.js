@@ -5,11 +5,11 @@ export default {
     user: Object,
   },
   data() {
-    return { store, apiUrl: /backend/, newRole: '', newPassword: '' };
+    return { store, newRole: '', newPassword: '' };
   },
   methods: {
     async saveUser() {
-      const response = await fetch(this.apiUrl, {
+      const response = await fetch(store.apiUrl, {
         method: 'POST',
         body: JSON.stringify({
           ...this.user,
@@ -26,7 +26,7 @@ export default {
     },
     async deleteUser(userId) {
       console.log(userId);
-      const response = await fetch(this.apiUrl, {
+      const response = await fetch(store.apiUrl, {
         method: 'POST',
         body: JSON.stringify({ id: this.user.id, action: 'deleteUser' }),
       });

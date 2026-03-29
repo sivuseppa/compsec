@@ -93,10 +93,11 @@ header.main {
   padding: 0.5rem 2rem;
 }
 
-header .logo {
+.logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  /* gap: 0.5rem; */
+  margin-right: 1em;
 }
 
 header h1 {
@@ -161,7 +162,7 @@ footer p {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 600px;
+  width: 400px;
   height: fit-content;
   margin: 5rem auto;
   padding: 3rem;

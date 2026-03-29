@@ -7,6 +7,7 @@ export const store = reactive({
   notice: {
     type: '',
     content: '',
+    canBeDissmissed: true,
   },
   pages: {
     1: {
@@ -40,6 +41,11 @@ export const store = reactive({
       await this.getCurrentUser();
       console.log(this.currentUser);
     }
+  },
+  setNotice(type = '', content = '', canBeDissmissed = true) {
+    this.notice.type = type;
+    this.notice.content = content;
+    this.notice.canBeDissmissed = canBeDissmissed;
   },
   async fetchUsers() {
     const response = await fetch(this.apiUrl + '?action=getUsers');
