@@ -10,6 +10,10 @@ export const store = reactive({
     canBeDissmissed: true,
   },
   pages: {
+    0: {
+      title: 'Login',
+      description: '',
+    },
     1: {
       title: 'Dashboard',
       description: 'One day, here you have a dashboard.',
@@ -27,6 +31,7 @@ export const store = reactive({
       description: 'Here you can manage settings.',
     },
   },
+  settings: [],
   currentPage: {},
 
   async getCurrentUser() {
@@ -51,6 +56,11 @@ export const store = reactive({
     const response = await fetch(this.apiUrl + '?action=getUsers');
     const data = await response.json();
     this.users = [...data.message];
+  },
+  async fetchSettings() {
+    const response = await fetch(this.apiUrl + '?action=getSettings');
+    const data = await response.json();
+    this.settings = [...data.message];
   },
   setPage(num = null) {
     if (num) {

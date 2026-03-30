@@ -38,8 +38,13 @@ body {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   font-weight: 500;
+}
+
+a {
+  color: var(--button-bg-color);
 }
 
 button {
@@ -97,7 +102,7 @@ header.main {
   display: flex;
   align-items: center;
   /* gap: 0.5rem; */
-  margin-right: 1em;
+  /* margin-right: 1em; */
 }
 
 header h1 {
@@ -165,11 +170,25 @@ footer p {
   width: 400px;
   height: fit-content;
   margin: 5rem auto;
-  padding: 3rem;
+  padding: 0 0 3rem 0;
   gap: 1rem;
   background-color: var(--light-bg-color);
   border: 1px solid var(--main-border-color);
   border-radius: 0.5rem;
+}
+
+.loginform header {
+  width: 100%;
+  border-bottom: 1px solid var(--main-border-color);
+  justify-items: center;
+  justify-content: center;
+  color: var(--button-delete-bg-color);
+}
+
+.loginform div {
+  margin-left: 3rem;
+  margin-right: 3rem;
+  text-align: center;
 }
 
 .saveUserForm {
@@ -222,6 +241,7 @@ td {
 .notice-wrapper {
   display: flex;
   gap: 1rem;
+  width: auto;
   justify-content: space-between;
   align-items: flex-start;
   border-left: 5px solid;
@@ -249,5 +269,5 @@ td {
 .logout-wrapper {
   display: flex;
   align-items: center;
-  gap: 1em;
+  gap: 2em;
 }

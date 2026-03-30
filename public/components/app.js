@@ -4,6 +4,7 @@ import Login from './login.js';
 import Notice from './notice.js';
 import Avatar from './avatar.js';
 import Navigation from './navigation.js';
+import Settings from './settings.js';
 
 const fetchUserId = () => {
   const cookieValue = document.cookie
@@ -21,6 +22,7 @@ export default {
     Notice,
     Avatar,
     Navigation,
+    Settings,
   },
   data() {
     return {
@@ -36,6 +38,7 @@ export default {
         body: JSON.stringify({ action: 'logout' }),
       });
       store.setIsloggedIn();
+      store.setNotice();
     },
   },
   mounted() {

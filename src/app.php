@@ -8,12 +8,14 @@
 namespace MMoro\CompSecApp;
 
 use SQLite3;
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+// use PHPMailer\PHPMailer\PHPMailer;
+// use PHPMailer\PHPMailer\Exception;
 
-require_once SRC_DIR . 'phpmailer/src/Exception.php';
-require_once SRC_DIR . 'phpmailer/src/PHPMailer.php';
-require_once SRC_DIR . 'phpmailer/src/SMTP.php';
+// require_once SRC_DIR . 'phpmailer/src/Exception.php';
+// require_once SRC_DIR . 'phpmailer/src/PHPMailer.php';
+// require_once SRC_DIR . 'phpmailer/src/SMTP.php';
+
+require_once SRC_DIR . 'mailer.php';
 require_once SRC_DIR . 'user.php';
 
 /**
@@ -24,7 +26,7 @@ final class App {
 	private $db;
 	public $user;
 	public $logger;
-	public $mail;
+	public $mailer;
 
 	public function __construct() {
 		$this->logger = new Logger();
@@ -41,7 +43,7 @@ final class App {
 			// Errors are emitted as warnings by default, enable proper error handling.
 			$this->db->enableExceptions( true );
 
-			// Create a tables.
+			// Create tables.
 			$this->db->query(
 				'CREATE TABLE IF NOT EXISTS "users" (
 					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -49,18 +51,59 @@ final class App {
 					"email" VARCHAR,
 					"password" VARCHAR,
 					"role" VARCHAR,
-					"iv" VARCHAR
+					"iv" VARCHAR,
+					"otp" int,
+					"otp_timestamp" VARCHAR,
+					"pw_reset_key" VARCHAR,
+					"pw_reset_timestamp" VARCHAR
 				)'
 			);
 
 			$this->db->query(
-				'CREATE TABLE IF NOT EXISTS "home_assistants" (
+				'CREATE TABLE IF NOT EXISTS "tasks" (
 					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 					"name" VARCHAR,
-					"url" VARCHAR,
-					"api_key" VARCHAR
+					"description" VARCHAR,
+					"status" VARCHAR
 				)'
 			);
+
+			$this->db->query(
+				'CREATE TABLE IF NOT EXISTS "users_tasks" (
+					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					"user_id" VARCHAR,
+					"task_id" VARCHAR,
+					"role" VARCHAR,
+					FOREIGN KEY(user_id) REFERENCES users(id),
+					FOREIGN KEY(task_id) REFERENCES tasks(id)
+				)'
+			);
+
+			$this->db->query(
+				'CREATE TABLE IF NOT EXISTS "settings" (
+					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					"name" VARCHAR,
+					"label" VARCHAR,
+					"value" VARCHAR
+				)'
+			);
+
+			// Set up settings data if not alreay set.
+			$results       = $this->db->query( 'SELECT * FROM "settings"' );
+			$settings_data = $results->fetchArray();
+			if ( ! $settings_data ) {
+					$this->db->query(
+						'INSERT INTO "settings"
+						(name, label, value)
+						VALUES 
+						("smtp_host", "Mailer SMTP host", ""),
+						("smtp_username", "Mailer SMTP username", ""),
+						("smtp_password", "Mailer SMTP password", ""),
+						("smtp_port", "Mailer SMTP port", ""),
+						("smtp_sender", "Mailer sender email", "")
+						'
+					);
+			}
 
 			$app_env        = isset( $_ENV['APP_ENV'] ) ? $_ENV['APP_ENV'] : '';
 			$admin_username = isset( $_ENV['ADMIN_UNAME'] ) ? $_ENV['ADMIN_UNAME'] : '';
@@ -102,17 +145,7 @@ final class App {
 	 * Init mailer
 	 */
 	private function init_mailer() {
-		$this->mail = new PHPMailer( true );
-		// Mail server settings.
-		$this->mail->isSMTP();
-		$this->mail->SMTPDebug  = 2;                                         // Send using SMTP
-		$this->mail->Host       = $_ENV['SMTP_HOST'];                     // Set the SMTP server to send through
-		$this->mail->SMTPAuth   = true;                                   // Enable SMTP authentication
-		$this->mail->Username   = $_ENV['SMTP_USERNAME'];               // SMTP username
-		$this->mail->Password   = $_ENV['SMTP_PASS'];                        // SMTP password
-		$this->mail->SMTPSecure = 'tls'; // Enable TLS encryption
-		$this->mail->Port       = $_ENV['SMTP_PORT'];
-		$this->mail->Mailer     = 'smtp';
+		$this->mailer = new Mailer();
 	}
 
 	/**
@@ -285,10 +318,126 @@ final class App {
 		// $this->logger->write( $data );
 
 		if ( isset( $data['id'] ) && $data['id'] ) {
-			// $this->logger->write( $data['id'] );
 			return $data['id'];
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Trigger a reset password process, if user found on the system.
+	 *
+	 * @param Object $post_data The post data containing the email address of the user whose password we want to reset.
+	 */
+	public function maybe_send_reset_password_email( $post_data ) {
+
+		$email   = $post_data->email;
+		$user_id = $this->get_user_id_by_email( $email );
+
+		if ( $user_id ) {
+			$user         = new User( $user_id );
+			$timestamp    = time();
+			$pw_reset_key = generate_random_string();
+
+			$user->save_pw_reset_key( $pw_reset_key, $timestamp );
+
+			$this->mailer->send_reset_password_email( $email, $pw_reset_key );
+		}
+
+		send_response_and_exit( 200, 'success', 'The reset password email has been sent.' );
+	}
+
+
+	/**
+	 * Trigger a reset password process, if user found on the system.
+	 *
+	 * @param Object $post_data The post data containing the email address of the user whose password we want to reset.
+	 */
+	public function maybe_reset_password( $post_data ) {
+
+		try {
+
+			$pw_reset_key = $post_data->pw_reset_key;
+			$new_password = isset( $post_data->password ) && is_valid_password( $post_data->password ) ? $post_data->password : '';
+			$username     = $post_data->username;
+			$user_id      = $this->get_user_id_by_username( $username );
+
+		} catch ( \Throwable $exception ) {
+			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
+		}
+
+		if ( $user_id && $pw_reset_key && $new_password ) {
+
+			$user = new User( $user_id );
+			$user->reset_password( $new_password, $pw_reset_key );
+			send_response_and_exit( 200, 'success', 'New password saved.' );
+		}
+
+		send_response_and_exit( 403, 'forbidden', 'Missing data.' );
+	}
+
+
+	/**
+	 * Save all settings.
+	 *
+	 * @param Object $post_data The post data containing the setting data.
+	 */
+	public function save_all_settings( $post_data ) {
+
+		if ( ! $this->user->is_admin() ) {
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
+		}
+
+		foreach ( $post_data->settings as $setting ) {
+			$this->save_setting( $setting->name, $setting->value );
+		}
+
+		send_response_and_exit( 200, 'success', 'Settings saved.' );
+	}
+
+
+	/**
+	 * Save a single setting.
+	 *
+	 * @param string     $name the name of the setting.
+	 * @param string|int $value the option value.
+	 */
+	public function save_setting( $name, $value ) {
+
+		$name  = sanitize_str( $name );
+		$value = sanitize_str( $value );
+
+		$statement = $this->db->prepare(
+			'UPDATE settings
+			SET value = :value
+			WHERE name = :name'
+		);
+		$statement->bindValue( ':value', $value );
+		$statement->bindValue( ':name', $name );
+		$statement->execute();
+	}
+
+	/**
+	 * Return settings data for admin users.
+	 */
+	public function return_all_settings() {
+
+		if ( ! $this->user->is_admin() ) {
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
+		}
+		send_response_and_exit( 200, 'success', $this->get_all_settings() );
+	}
+
+	/**
+	 * Get all settings.
+	 */
+	public function get_all_settings() {
+		$results_arr = array();
+		$results     = $this->db->query( 'SELECT * FROM settings' );
+		while ( $result = $results->fetchArray( SQLITE3_ASSOC ) ) {
+			$results_arr[] = $result;
+		}
+		// new Logger()->write( $results_arr );
+		return $results_arr;
 	}
 }

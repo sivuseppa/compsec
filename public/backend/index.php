@@ -9,6 +9,7 @@ namespace MMoro\CompSecApp;
 
 define( 'SRC_DIR', dirname( __DIR__, 2 ) . '/src/' );
 define( 'DATA_DIR', dirname( __DIR__, 2 ) . '/data/' );
+define( 'APP_VERSION', '0.1.0' );
 header( 'Content-Type: application/json' );
 
 require_once SRC_DIR . 'functions.php';
@@ -32,9 +33,13 @@ try {
 
 		new Logger()->write( $data );
 
-		// Login is only action allowed without authentication.
+		// Login and resetPassword are only actions allowed without authentication.
 		if ( 'login' === $action ) {
 			$app->user->login( $data );
+		} elseif ( 'lostPassword' === $action ) {
+			$app->maybe_send_reset_password_email( $data );
+		} elseif ( 'resetPassword' === $action ) {
+			$app->maybe_reset_password( $data );
 		}
 	} elseif ( 'GET' === $method ) {
 		$action = isset( $_GET['action'] ) ? $_GET['action'] : '';
@@ -53,6 +58,8 @@ try {
 				$app->get_current_user();
 			} elseif ( 'getUsers' === $action ) {
 				$app->return_userdata();
+			} elseif ( 'getSettings' === $action ) {
+				$app->return_all_settings();
 			} else {
 				throw new \Exception( 'Please check your action.' );
 			}
@@ -66,6 +73,8 @@ try {
 				$app->save_user( $data );
 			} elseif ( 'deleteUser' === $action ) {
 				$app->delete_user( $data );
+			} elseif ( 'saveSettings' === $action ) {
+				$app->save_all_settings( $data );
 			} else {
 				throw new \Exception( 'Please check your action.' );
 			}

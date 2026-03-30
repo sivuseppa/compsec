@@ -33,8 +33,11 @@
     <notice></notice>
     <section>
       <p>{{ store.currentPage.description }}</p>
+
       <!-- Users -->
       <users v-if="store.currentPage.title == 'Users'"></users>
+      <!-- Settings -->
+      <settings v-if="store.currentPage.title == 'Settings'"></settings>
 
     </section>
   </main>
