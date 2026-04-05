@@ -14,7 +14,7 @@ use SQLite3;
  */
 final class User {
 
-	private $db;
+	private static $db;
 
 	public $id = null;
 	public $username;
@@ -28,12 +28,12 @@ final class User {
 	 * @param int $user_id The id of the user.
 	 */
 	public function __construct( $user_id = null ) {
-		$this->db = new SQLite3( DATABASE );
-		$this->db->enableExceptions( true );
 		$this->id = $user_id;
-		// $this->get_userdata();
 	}
 
+	public static function set_db( $db ) {
+		self::$db = $db;
+	}
 
 	/**
 	 * Return userdata.
@@ -41,7 +41,7 @@ final class User {
 	public function get_userdata() {
 
 		if ( ! $this->username ) {
-			$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
+			$statement = self::$db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
 			$statement->bindValue( 1, $this->id );
 			$result    = $statement->execute();
 			$user_data = $result->fetchArray( SQLITE3_ASSOC );
@@ -62,10 +62,9 @@ final class User {
 	/**
 	 * Get all users from the database.
 	 */
-	public static function get_users_data() {
+	public function get_users_data() {
 		$results_arr = array();
-		$db          = new SQLite3( DATABASE );
-		$results     = $db->query( 'SELECT id, username, email, role FROM "users"' );
+		$results     = self::$db->query( 'SELECT id, username, email, role FROM "users"' );
 		while ( $result = $results->fetchArray( SQLITE3_ASSOC ) ) {
 			$results_arr[] = $result;
 		}
@@ -81,7 +80,7 @@ final class User {
 			return $this->email;
 		}
 
-		$statement = $this->db->prepare( 'SELECT email FROM users WHERE id = ?' );
+		$statement = self::$db->prepare( 'SELECT email FROM users WHERE id = ?' );
 		$statement->bindValue( 1, $this->id );
 		$result    = $statement->execute();
 		$user_data = $result->fetchArray( SQLITE3_ASSOC );
@@ -97,13 +96,13 @@ final class User {
 
 		// Insert potentially unsafe data with a prepared statement and named parameters.
 		if ( $this->id ) {
-			$statement = $this->db->prepare(
+			$statement = self::$db->prepare(
 				'UPDATE users 
 				SET username = :username, email = :email, role = :role
 				WHERE id = :id'
 			);
 		} else {
-			$statement = $this->db->prepare(
+			$statement = self::$db->prepare(
 				'INSERT INTO users ("id", email, "username", "role")
 				VALUES (:id, :email, :username, :role)'
 			);
@@ -116,7 +115,7 @@ final class User {
 		$statement->execute();
 
 		// Test how userdata is saved, remove this!!!
-		// $statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
+		// $statement = self::$db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
 		// $statement->bindValue( 1, $this->id );
 		// $result    = $statement->execute();
 		// $user_data = $result->fetchArray( SQLITE3_ASSOC );
@@ -135,7 +134,7 @@ final class User {
 	 * @param string $new_password The new password.
 	 */
 	public function save_password( $new_password ) {
-		$statement = $this->db->prepare(
+		$statement = self::$db->prepare(
 			'UPDATE users 
 			SET password = :password
 			WHERE id = :id'
@@ -150,7 +149,7 @@ final class User {
 	 * Delete user.
 	 */
 	public function delete() {
-		$statement = $this->db->prepare(
+		$statement = self::$db->prepare(
 			'DELETE FROM "users"
 			WHERE id = :id'
 		);
@@ -178,7 +177,7 @@ final class User {
 		// Use base 64 encoding to make sure
 		// IV bytes remains unchanged during database operations.
 		$iv        = base64_encode( $iv ); // phpcs:ignore
-		$statement = $this->db->prepare(
+		$statement = self::$db->prepare(
 			'UPDATE users SET iv = :iv
 			WHERE id = :id'
 		);
@@ -192,7 +191,7 @@ final class User {
 	 * Return initialization vector from the database.
 	 */
 	public function get_init_vector( $user_id ) {
-		$statement = $this->db->prepare(
+		$statement = self::$db->prepare(
 			'SELECT iv FROM users
 			WHERE id = :id'
 		);
@@ -227,7 +226,7 @@ final class User {
 	 * @param string $timestamp The time to handle reset key expiration.
 	 */
 	public function save_pw_reset_key( $key, $timestamp ) {
-		$statement = $this->db->prepare(
+		$statement = self::$db->prepare(
 			'UPDATE users SET pw_reset_key = :pw_reset_key, pw_reset_timestamp = :pw_reset_timestamp
 			WHERE id = :id'
 		);
@@ -244,7 +243,7 @@ final class User {
 	 * @param string $_pw_reset_key The reset key to validate.
 	 */
 	public function is_valid_pw_reset_key( $_pw_reset_key ) {
-		$statement = $this->db->prepare(
+		$statement = self::$db->prepare(
 			'SELECT pw_reset_key, pw_reset_timestamp FROM users
 			WHERE id = :id'
 		);

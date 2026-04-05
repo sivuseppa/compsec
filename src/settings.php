@@ -14,15 +14,18 @@ use SQLite3;
  */
 final class Settings {
 
-	private $db;
+	private static $db;
+	// private $db;
 	private $logger;
 	private $mailer;
 
 	public function __construct() {
-		$this->db = new SQLite3( DATABASE );
-		$this->db->enableExceptions( true );
 		$this->logger = new Logger();
 		$this->mailer = new Mailer();
+	}
+
+	public static function set_db( $db ) {
+		self::$db = $db;
 	}
 
 	/**
@@ -30,12 +33,11 @@ final class Settings {
 	 */
 	public function get_all() {
 		$results_arr = array();
-		$results     = $this->db->query( 'SELECT * FROM settings' );
+		$results     = self::$db->query( 'SELECT * FROM settings' );
 		while ( $result = $results->fetchArray( SQLITE3_ASSOC ) ) {
 			$results_arr[] = $result;
 		}
 		// $this->logger->write( $results_arr );
-		// new Logger()->write( $results_arr );
 		return $results_arr;
 	}
 

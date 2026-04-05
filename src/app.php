@@ -27,18 +27,25 @@ final class App {
 	public $mailer;
 
 	public function __construct() {
-		$this->logger   = new Logger();
-		$this->auth     = new Auth();
-		$this->settings = new Settings();
-		$this->mailer   = new Mailer();
 		$this->init_db();
-		$this->init_user();
+
+		$this->logger = new Logger();
+		$this->mailer = new Mailer();
+
+		$this->settings = new Settings();
+		Settings::set_db( $this->db );
+
+		$this->user = new User();
+		User::set_db( $this->db );
+
+		$this->auth = new Auth();
+		Auth::set_db( $this->db );
 	}
 
 	private function init_db() {
 
 		try {
-			$this->db = new SQLite3( DATABASE );
+			$this->db = new SQLite3( DATABASE ); // Try to open a db file, creates it if not exists.
 
 			// Errors are emitted as warnings by default, enable proper error handling.
 			$this->db->enableExceptions( true );
@@ -135,13 +142,6 @@ final class App {
 	}
 
 	/**
-	 * Init user.
-	 */
-	private function init_user() {
-		$this->user = new User();
-	}
-
-	/**
 	 * Log user in to the system
 	 *
 	 * @param object $post_data the post data.
@@ -179,7 +179,7 @@ final class App {
 		if ( ! $this->user->is_admin() ) {
 			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
-		send_response_and_exit( 200, 'success', User::get_users_data() );
+		send_response_and_exit( 200, 'success', $this->user->get_users_data() );
 	}
 
 

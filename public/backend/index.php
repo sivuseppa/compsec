@@ -19,7 +19,7 @@ require_once SRC_DIR . 'logger.php';
 require_once SRC_DIR . 'app.php';
 
 ( function () {
-	// Prevent global scoping.
+	// Prevent global scoping. Why?
 
 	try {
 		new DotEnv( dirname( __DIR__, 2 ) . '/.env' )->load(); // Load .env file data to $_ENV superglobal.

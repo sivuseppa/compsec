@@ -14,16 +14,21 @@ use SQLite3;
  */
 final class Auth {
 
-	private $db;
+	private static $db;
+	// private $db;
 	private $logger;
 	private $mailer;
 	private $cipher = 'aes-256-cbc';
 
 	public function __construct() {
-		$this->db = new SQLite3( DATABASE );
-		$this->db->enableExceptions( true );
+		// self::db = new SQLite3( DATABASE );
+		// self::db->enableExceptions( true );
 		$this->logger = new Logger();
 		$this->mailer = new Mailer();
+	}
+
+	public static function set_db( $db ) {
+		self::$db = $db;
 	}
 
 	/**
@@ -39,7 +44,7 @@ final class Auth {
 		$username = $post_data->username;
 		$password = $post_data->password;
 
-		$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "username" = ?' );
+		$statement = self::$db->prepare( 'SELECT * FROM "users" WHERE "username" = ?' );
 		$statement->bindValue( 1, $username );
 		$result    = $statement->execute();
 		$user_data = $result->fetchArray( SQLITE3_ASSOC );
