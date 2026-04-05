@@ -9,22 +9,18 @@ namespace MMoro\CompSecApp;
 
 use SQLite3;
 
-require_once SRC_DIR . 'mailer.php';
-
 /**
  * The User model class
  */
 final class User {
 
 	private $db;
-	private $mailer;
 
 	public $id = null;
 	public $username;
 	public $password;
 	public $email;
-	public $role   = '';
-	public $cipher = 'aes-256-cbc';
+	public $role = '';
 
 	/**
 	 * Constuctor
@@ -32,9 +28,9 @@ final class User {
 	 * @param int $user_id The id of the user.
 	 */
 	public function __construct( $user_id = null ) {
-		$this->db     = new SQLite3( DATA_DIR . 'db/db.sqlite' );
-		$this->id     = $user_id;
-		$this->mailer = new Mailer();
+		$this->db = new SQLite3( DATABASE );
+		$this->db->enableExceptions( true );
+		$this->id = $user_id;
 		// $this->get_userdata();
 	}
 
@@ -61,6 +57,20 @@ final class User {
 			'email'    => $this->email,
 			'role'     => $this->role,
 		);
+	}
+
+	/**
+	 * Get all users from the database.
+	 */
+	public static function get_users_data() {
+		$results_arr = array();
+		$db          = new SQLite3( DATABASE );
+		$results     = $db->query( 'SELECT id, username, email, role FROM "users"' );
+		while ( $result = $results->fetchArray( SQLITE3_ASSOC ) ) {
+			$results_arr[] = $result;
+		}
+		// new Logger()->write( $results_arr );
+		return $results_arr;
 	}
 
 	/**
@@ -159,139 +169,6 @@ final class User {
 
 
 	/**
-	 * Log in
-	 *
-	 * @param object $post_data the post data.
-	 * @throws \Exception If outhorization fails.
-	 */
-	public function login( $post_data ) {
-
-		$username = $post_data->username;
-		$password = $post_data->password;
-
-		$statement = $this->db->prepare( 'SELECT * FROM "users" WHERE "username" = ?' );
-		$statement->bindValue( 1, $username );
-		$result    = $statement->execute();
-		$user_data = $result->fetchArray( SQLITE3_ASSOC );
-
-		if ( ! $user_data ) {
-			throw new \Exception( 'User not found.' );
-		}
-
-		// Verify password and set login cookie.
-		if ( password_verify( $password, $user_data['password'] ) ) {
-
-			$this->id = $user_data['id'];
-			$time     = time(); // define time variable here to ease unit testing.
-
-			$options = array(
-				'expires'  => $time + 3600,
-				'path'     => '/',
-				'secure'   => true,
-				'httponly' => false,
-				'samesite' => 'Strict',
-			);
-			setcookie(
-				'HSA_TOKEN',
-				$this->id . '_' . $this->create_token( $time ),
-				$options
-			);
-			send_response_and_exit( 200, 'success', 'Logged in.' );
-
-		} else {
-			throw new \Exception( 'Unauthorized.' );
-		}
-
-		exit; // All done.
-	}
-
-
-	/**
-	 * Check if user is or should be logged in by validating the token data in cookie.
-	 */
-	public function is_logged_in() {
-
-		$cookie_value = isset( $_COOKIE['HSA_TOKEN'] ) ? $_COOKIE['HSA_TOKEN'] : '';
-
-		if ( ! $cookie_value ) {
-			return false;
-		}
-
-		$splitted_cookie = explode( '_', $cookie_value, 2 );
-		$user_id         = isset( $splitted_cookie[0] ) && $splitted_cookie[0] ? $splitted_cookie[0] : null;
-		$token           = isset( $splitted_cookie[1] ) && $splitted_cookie[1] ? $splitted_cookie[1] : null;
-
-		if ( ! $user_id || ! $token ) {
-			return false;
-		}
-
-		$token_data  = openssl_decrypt(
-			$token,
-			$this->cipher,
-			$_ENV['APP_SECRET_KEY'], // A secret key from enviroment vars.
-			$options = 0,
-			$this->get_init_vector( $user_id )  // User specific IV from the database.
-		);
-		$token_data = json_decode( $token_data, true );
-
-		$is_valid_user = isset( $token_data['user_id'] )
-						&& intval( $token_data['user_id'] ) === intval( $user_id );
-		$cookietime    = isset( $token_data['timestamp'] ) ? intval( $token_data['timestamp'] ) : 0;
-		$timenow       = intval( time() );
-		$is_valid_time = ( $timenow - $cookietime ) < 3600; // Max login time is 1 hour.
-
-		if ( $is_valid_user && $is_valid_time ) {
-			$this->id = $user_id;
-			return true;
-		}
-
-		return false;
-	}
-
-
-	/**
-	 * Create a cryptographically secure token for login.
-	 *
-	 * @param string $time The timestamp.
-	 * @throws \Exception When somethin goes wrong.
-	 */
-	public function create_token( $time ) {
-
-		$data = json_encode(
-			array(
-				'user_id'   => $this->id,
-				'timestamp' => $time,
-			)
-		);
-
-		if ( in_array( $this->cipher, openssl_get_cipher_methods(), true ) ) {
-
-			$ivlen       = openssl_cipher_iv_length( $this->cipher );
-			$init_vector = openssl_random_pseudo_bytes( $ivlen );
-
-			$token       = openssl_encrypt(
-				$data,
-				$this->cipher,
-				$_ENV['APP_SECRET_KEY'], // The secret key from enviroment vars.
-				$options = 0,
-				$init_vector,
-			);
-
-			if ( ! $token ) {
-				throw new \Exception( 'Error Processing Request' );
-			}
-
-			// Save IV to the the database.
-			$this->save_init_vector( $init_vector );
-
-			return $token;
-		} else {
-			throw new \Exception( 'Error Processing Request' );
-		}
-	}
-
-
-	/**
 	 * Save initialization vector the database among other user data
 	 * to be used later on token validation process.
 	 *
@@ -308,6 +185,7 @@ final class User {
 		$statement->bindValue( ':id', $this->id );
 		$statement->bindValue( ':iv', $iv );
 		$statement->execute();
+		$statement->close();
 	}
 
 	/**
@@ -357,6 +235,7 @@ final class User {
 		$statement->bindValue( ':pw_reset_key', $key );
 		$statement->bindValue( ':pw_reset_timestamp', $timestamp );
 		$statement->execute();
+		$statement->close();
 	}
 
 	/**
@@ -385,14 +264,5 @@ final class User {
 		}
 
 		return false;
-	}
-
-
-	/**
-	 * Logout
-	 */
-	public function logout() {
-		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
-		send_response_and_exit( 200, 'success', 'Logged out.' );
 	}
 }

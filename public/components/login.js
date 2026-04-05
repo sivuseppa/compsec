@@ -34,7 +34,7 @@ export default {
         this.username = '';
         this.password = '';
         store.setNotice();
-      } else  {
+      } else {
         store.setNotice(data.status, data.message, false);
       }
     },
@@ -61,6 +61,8 @@ export default {
                 </svg>
                 <h3>CompSecApp</h3>
               </header>
+
+              <!-- Headings -->
               <h3 v-if="mode == 'login'">Login</h3>
               <div v-if="mode == 'lostPassword'">
                 <h3>Lost you password?</h3>
@@ -70,7 +72,10 @@ export default {
                 <h3>Reset password</h3>
                 <small>Write your username and a new password.</small>
               </div>
+
               <notice></notice>
+
+              <!-- Inputs -->
               <label v-if="mode !== 'lostPassword'">
                 <small>Username</small>
                 <input id="username" name="username" type="text" v-model="username" required />
@@ -83,9 +88,12 @@ export default {
                 <small>Password</small>
                 <input id="password" name="password" type="password" v-model="password" required />
               </label>
+
+              <!-- Buttons -->
               <button v-if="mode == 'login'" class="button">Login</button>
               <button v-if="mode == 'lostPassword'" class="button">Send email</button>
               <button v-if="mode == 'resetPassword'" class="button">Reset password</button>
+              
               <a v-if="mode !== 'login'" href="/"><small><- Back to login<small></a>
               <a v-if="mode == 'login'" href="/?lostPassword"><small>Lost your password?<small></a>
             </form>`,

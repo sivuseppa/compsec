@@ -8,15 +8,11 @@
 namespace MMoro\CompSecApp;
 
 use SQLite3;
-// use PHPMailer\PHPMailer\PHPMailer;
-// use PHPMailer\PHPMailer\Exception;
-
-// require_once SRC_DIR . 'phpmailer/src/Exception.php';
-// require_once SRC_DIR . 'phpmailer/src/PHPMailer.php';
-// require_once SRC_DIR . 'phpmailer/src/SMTP.php';
 
 require_once SRC_DIR . 'mailer.php';
 require_once SRC_DIR . 'user.php';
+require_once SRC_DIR . 'auth.php';
+require_once SRC_DIR . 'settings.php';
 
 /**
  * Class App
@@ -24,21 +20,25 @@ require_once SRC_DIR . 'user.php';
 final class App {
 
 	private $db;
+	private $auth;
+	private $settings;
 	public $user;
 	public $logger;
 	public $mailer;
 
 	public function __construct() {
-		$this->logger = new Logger();
+		$this->logger   = new Logger();
+		$this->auth     = new Auth();
+		$this->settings = new Settings();
+		$this->mailer   = new Mailer();
 		$this->init_db();
 		$this->init_user();
-		$this->init_mailer();
 	}
 
 	private function init_db() {
 
 		try {
-			$this->db = new SQLite3( DATA_DIR . 'db/db.sqlite' );
+			$this->db = new SQLite3( DATABASE );
 
 			// Errors are emitted as warnings by default, enable proper error handling.
 			$this->db->enableExceptions( true );
@@ -142,10 +142,26 @@ final class App {
 	}
 
 	/**
-	 * Init mailer
+	 * Log user in to the system
+	 *
+	 * @param object $post_data the post data.
 	 */
-	private function init_mailer() {
-		$this->mailer = new Mailer();
+	public function log_user_in( $post_data ) {
+		$this->auth->log_user_in( $this->user, $post_data );
+	}
+
+	/**
+	 * Log current user out from the system
+	 */
+	public function log_user_out() {
+		$this->auth->log_user_out();
+	}
+
+	/**
+	 * Check if the current user is logged in or not.
+	 */
+	public function is_user_logged_in() {
+		return $this->auth->is_user_logged_in( $this->user );
 	}
 
 	/**
@@ -155,51 +171,39 @@ final class App {
 		send_response_and_exit( 200, 'success', $this->user->get_userdata() );
 	}
 
-
 	/**
-	 * Return user data for admin users.
+	 * Return user data, for admin users only.
 	 */
 	public function return_userdata() {
 
 		if ( ! $this->user->is_admin() ) {
 			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
-		send_response_and_exit( 200, 'success', $this->get_users_data() );
+		send_response_and_exit( 200, 'success', User::get_users_data() );
 	}
 
-	/**
-	 * Get all users from the database.
-	 */
-	private function get_users_data() {
-		$results_arr = array();
-		$results     = $this->db->query( 'SELECT id, username, email, role FROM "users"' );
-		while ( $result = $results->fetchArray( SQLITE3_ASSOC ) ) {
-			$results_arr[] = $result;
-		}
-		// new Logger()->write( $results_arr );
-		return $results_arr;
-	}
 
 	/**
-	 * Add new user to the system. Make sure that the post data is valid to use on user creation.
+	 * Try to new user to the system.
+	 * Make sure that the post data is valid to use on user creation, and user does not already exists.
 	 *
 	 * @param object $post_data the post data.
 	 */
-	public function add_user( $post_data ) {
+	public function add_new_user( $post_data ) {
 
 		try {
 
 			if ( isset( $post_data->id ) ) {
 				send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
 			}
-			if ( isset( $post_data->email ) && $this->get_user_id_by_email( $post_data->email ) ) {
+			if ( isset( $post_data->email ) && self::get_user_id_by_email( $post_data->email ) ) {
 				send_response_and_exit( 403, 'forbidden', 'Try another email.' );
 			}
-			if ( isset( $post_data->username ) && $this->get_user_id_by_username( $post_data->username ) ) {
+			if ( isset( $post_data->username ) && self::get_user_id_by_username( $post_data->username ) ) {
 				send_response_and_exit( 403, 'forbidden', 'Try another username.' );
 			}
 
-			$this->save_user( $post_data );
+			$this->save_user_data( $post_data );
 
 		} catch ( \Throwable $exception ) {
 			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
@@ -207,11 +211,11 @@ final class App {
 	}
 
 	/**
-	 * Save userdata.
+	 * Validate and sanitize user data, and then save.
 	 *
 	 * @param object $post_data the post data.
 	 */
-	public function save_user( $post_data ) {
+	public function save_user_data( $post_data ) {
 
 		try {
 
@@ -271,16 +275,18 @@ final class App {
 		$user->delete();
 	}
 
+
 	/**
 	 * Get user by email
 	 *
 	 * @param string $email the email fo the user.
 	 * @return int|bool user id on success, false on fail.
 	 */
-	private function get_user_id_by_email( $email ) {
+	public static function get_user_id_by_email( $email ) {
 		$email = sanitize_email( $email );
+		$db    = new SQLite3( DATABASE );
 
-		$statement = $this->db->prepare(
+		$statement = $db->prepare(
 			'SELECT id FROM users
 			WHERE email = :email'
 		);
@@ -288,10 +294,10 @@ final class App {
 		$result = $statement->execute();
 		$data   = $result->fetchArray( SQLITE3_ASSOC );
 
-		$this->logger->write( $data );
+		// $this->logger->write( $data );
 
 		if ( isset( $data['id'] ) && $data['id'] ) {
-			$this->logger->write( $data['id'] );
+			// $this->logger->write( $data['id'] );
 			return $data['id'];
 		} else {
 			return false;
@@ -304,10 +310,11 @@ final class App {
 	 * @param string $username the username fo the user.
 	 * @return int|bool user id on success, false on fail.
 	 */
-	private function get_user_id_by_username( $username ) {
+	public static function get_user_id_by_username( $username ) {
 		$username = sanitize_str( $username );
+		$db       = new SQLite3( DATABASE );
 
-		$statement = $this->db->prepare(
+		$statement = $db->prepare(
 			'SELECT id FROM users
 			WHERE username = :username'
 		);
@@ -332,7 +339,7 @@ final class App {
 	public function maybe_send_reset_password_email( $post_data ) {
 
 		$email   = $post_data->email;
-		$user_id = $this->get_user_id_by_email( $email );
+		$user_id = self::get_user_id_by_email( $email );
 
 		if ( $user_id ) {
 			$user         = new User( $user_id );
@@ -356,11 +363,10 @@ final class App {
 	public function maybe_reset_password( $post_data ) {
 
 		try {
-
 			$pw_reset_key = $post_data->pw_reset_key;
 			$new_password = isset( $post_data->password ) && is_valid_password( $post_data->password ) ? $post_data->password : '';
 			$username     = $post_data->username;
-			$user_id      = $this->get_user_id_by_username( $username );
+			$user_id      = self::get_user_id_by_username( $username );
 
 		} catch ( \Throwable $exception ) {
 			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
@@ -387,35 +393,9 @@ final class App {
 		if ( ! $this->user->is_admin() ) {
 			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
-
-		foreach ( $post_data->settings as $setting ) {
-			$this->save_setting( $setting->name, $setting->value );
-		}
-
-		send_response_and_exit( 200, 'success', 'Settings saved.' );
+		$this->settings->save_multiple( $post_data );
 	}
 
-
-	/**
-	 * Save a single setting.
-	 *
-	 * @param string     $name the name of the setting.
-	 * @param string|int $value the option value.
-	 */
-	public function save_setting( $name, $value ) {
-
-		$name  = sanitize_str( $name );
-		$value = sanitize_str( $value );
-
-		$statement = $this->db->prepare(
-			'UPDATE settings
-			SET value = :value
-			WHERE name = :name'
-		);
-		$statement->bindValue( ':value', $value );
-		$statement->bindValue( ':name', $name );
-		$statement->execute();
-	}
 
 	/**
 	 * Return settings data for admin users.
@@ -425,19 +405,6 @@ final class App {
 		if ( ! $this->user->is_admin() ) {
 			send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		}
-		send_response_and_exit( 200, 'success', $this->get_all_settings() );
-	}
-
-	/**
-	 * Get all settings.
-	 */
-	public function get_all_settings() {
-		$results_arr = array();
-		$results     = $this->db->query( 'SELECT * FROM settings' );
-		while ( $result = $results->fetchArray( SQLITE3_ASSOC ) ) {
-			$results_arr[] = $result;
-		}
-		// new Logger()->write( $results_arr );
-		return $results_arr;
+		send_response_and_exit( 200, 'success', $this->settings->get_all() );
 	}
 }
