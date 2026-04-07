@@ -1,5 +1,6 @@
 import { store } from './store.js';
 import Users from './users.js';
+import Tasks from './tasks.js';
 import Login from './login.js';
 import Notice from './notice.js';
 import Avatar from './avatar.js';
@@ -18,6 +19,7 @@ const fetchUserId = () => {
 export default {
   components: {
     Users,
+    Tasks,
     Login,
     Notice,
     Avatar,

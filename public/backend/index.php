@@ -59,9 +59,11 @@ require_once SRC_DIR . 'app.php';
 		switch ( $method ) {
 			case 'GET':
 				if ( 'getCurrentUser' === $action ) {
-					$app->get_current_user();
+					$app->return_current_user();
 				} elseif ( 'getUsers' === $action ) {
-					$app->return_userdata();
+					$app->return_users();
+				} elseif ( 'getTasks' === $action ) {
+					$app->return_tasks();
 				} elseif ( 'getSettings' === $action ) {
 					$app->return_all_settings();
 				} else {

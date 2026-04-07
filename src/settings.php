@@ -52,7 +52,7 @@ final class Settings {
 		$name  = sanitize_str( $name );
 		$value = sanitize_str( $value );
 
-		$statement = $this->db->prepare(
+		$statement = self::$db->prepare(
 			'UPDATE settings
 			SET value = :value
 			WHERE name = :name'

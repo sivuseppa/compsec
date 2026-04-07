@@ -24,8 +24,7 @@ export default {
 
       store.fetchUsers();
     },
-    async deleteUser(userId) {
-      console.log(userId);
+    async deleteUser() {
       const response = await fetch(store.apiUrl, {
         method: 'POST',
         body: JSON.stringify({ id: this.user.id, action: 'deleteUser' }),

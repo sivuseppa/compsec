@@ -11,6 +11,7 @@ use SQLite3;
 
 require_once SRC_DIR . 'mailer.php';
 require_once SRC_DIR . 'user.php';
+require_once SRC_DIR . 'task.php';
 require_once SRC_DIR . 'auth.php';
 require_once SRC_DIR . 'settings.php';
 
@@ -40,6 +41,8 @@ final class App {
 
 		$this->auth = new Auth();
 		Auth::set_db( $this->db );
+
+		Task::set_db( $this->db );
 	}
 
 	private function init_db() {
@@ -71,7 +74,8 @@ final class App {
 					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 					"name" VARCHAR,
 					"description" VARCHAR,
-					"status" VARCHAR
+					"status" VARCHAR,
+					"author_id" INTEGER
 				)'
 			);
 
@@ -167,14 +171,14 @@ final class App {
 	/**
 	 * Return data of the current user.
 	 */
-	public function get_current_user() {
+	public function return_current_user() {
 		send_response_and_exit( 200, 'success', $this->user->get_userdata() );
 	}
 
 	/**
 	 * Return user data, for admin users only.
 	 */
-	public function return_userdata() {
+	public function return_users() {
 
 		if ( ! $this->user->is_admin() ) {
 			send_response_and_exit( 401, 'error', 'Unauthorized.' );
@@ -329,6 +333,74 @@ final class App {
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Return tasks data. User get own tasks, admin get all tasks.
+	 */
+	public function return_tasks() {
+		send_response_and_exit( 200, 'success', Task::get_tasks( $this->user ) );
+	}
+
+	/**
+	 * Try to add new task to the system.
+	 * Make sure that the post data is valid to use on task creation, and task does not already exists.
+	 *
+	 * @param object $post_data the post data.
+	 */
+	public function add_new_task( $post_data ) {
+
+		try {
+
+			if ( isset( $post_data->id ) ) {
+				send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
+			}
+
+			$this->save_task_data( $post_data );
+
+		} catch ( \Throwable $exception ) {
+			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
+		}
+	}
+
+	/**
+	 * Validate and sanitize user data, and then save.
+	 *
+	 * @param object $post_data the post data.
+	 */
+	public function save_task_data( $post_data ) {
+
+		try {
+			$task_id     = isset( $post_data->id ) && intval( $post_data->id ) ? intval( $post_data->id ) : null;
+			$name        = isset( $post_data->name ) ? sanitize_str( $post_data->name ) : '';
+			$description = isset( $post_data->description ) ? sanitize_str( $post_data->description ) : '';
+			$status      = isset( $post_data->status ) ? sanitize_str( $post_data->status ) : '';
+
+		} catch ( \Throwable $exception ) {
+			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
+		}
+
+		if ( ! $name || ! $description || ! $status ) {
+			send_response_and_exit( 403, 'forbidden', 'Missing data.' );
+		}
+
+		// User can save only own task, admin can save others tasks too.
+		// if ( $user_id === $this->user->id || $this->user->is_admin() ) {
+
+		$task              = new Task( $task_id );
+		$task->name        = $name;
+		$task->description = $description;
+		$task->status      = $status;
+
+		// For a new task, save current user as an author.
+		if ( ! $task_id ) {
+			$task->author_id = $this->user->id;
+		}
+
+		$task->save();
+		// } else {
+		// send_response_and_exit( 401, 'error', 'Unauthorized.' );
+		// }
 	}
 
 	/**

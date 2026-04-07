@@ -34,6 +34,8 @@
     <section>
       <p>{{ store.currentPage.description }}</p>
 
+      <!-- Tasks -->
+      <tasks v-if="store.currentPage.title == 'Tasks'"></tasks>
       <!-- Users -->
       <users v-if="store.currentPage.title == 'Users'"></users>
       <!-- Settings -->

@@ -4,6 +4,7 @@ export const store = reactive({
   currentUser: {},
   isLoggedIn: false,
   users: [],
+  tasks: [],
   notice: {
     type: '',
     content: '',
@@ -61,6 +62,11 @@ export const store = reactive({
     const response = await fetch(this.apiUrl + '?action=getSettings');
     const data = await response.json();
     this.settings = [...data.message];
+  },
+  async fetchTasks() {
+    const response = await fetch(this.apiUrl + '?action=getTasks');
+    const data = await response.json();
+    this.tasks = [...data.message];
   },
   setPage(num = null) {
     if (num) {
