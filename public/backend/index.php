@@ -79,6 +79,8 @@ require_once SRC_DIR . 'app.php';
 					$app->save_user( $data );
 				} elseif ( 'deleteUser' === $action ) {
 					$app->delete_user( $data );
+				} elseif ( 'addTask' === $action ) {
+					$app->add_new_task( $data );
 				} elseif ( 'saveSettings' === $action ) {
 					$app->save_all_settings( $data );
 				} else {

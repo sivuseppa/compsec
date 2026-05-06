@@ -36,9 +36,14 @@ export const store = reactive({
   currentPage: {},
 
   async getCurrentUser() {
+    if (Object.keys(this.currentUser).length > 0) {
+      return this.currentUser;
+    }
+
     const response = await fetch(this.apiUrl + '?action=getCurrentUser');
     const data = await response.json();
     this.currentUser = { ...data.message };
+    return this.currentUser;
   },
   async setIsloggedIn() {
     const cookieValue = document.cookie.split('; ').find((row) => row.startsWith('HSA_TOKEN='));

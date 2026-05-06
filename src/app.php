@@ -370,6 +370,8 @@ final class App {
 	 */
 	public function save_task_data( $post_data ) {
 
+		$this->logger->write( $post_data );
+
 		try {
 			$task_id     = isset( $post_data->id ) && intval( $post_data->id ) ? intval( $post_data->id ) : null;
 			$name        = isset( $post_data->name ) ? sanitize_str( $post_data->name ) : '';
@@ -428,7 +430,7 @@ final class App {
 
 
 	/**
-	 * Trigger a reset password process, if user found on the system.
+	 * Trigger a reset password process, if found user from the system.
 	 *
 	 * @param Object $post_data The post data containing the email address of the user whose password we want to reset.
 	 */

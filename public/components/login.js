@@ -94,7 +94,7 @@ export default {
               <button v-if="mode == 'lostPassword'" class="button">Send email</button>
               <button v-if="mode == 'resetPassword'" class="button">Reset password</button>
               
-              <a v-if="mode !== 'login'" href="/"><small><- Back to login<small></a>
-              <a v-if="mode == 'login'" href="/?lostPassword"><small>Lost your password?<small></a>
+              <a v-if="mode !== 'login'" href="/"><small><- Back to login</small></a>
+              <a v-if="mode == 'login'" href="/?lostPassword"><small>Lost your password?</small></a>
             </form>`,
 };

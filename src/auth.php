@@ -15,14 +15,11 @@ use SQLite3;
 final class Auth {
 
 	private static $db;
-	// private $db;
 	private $logger;
 	private $mailer;
 	private $cipher = 'aes-256-cbc';
 
 	public function __construct() {
-		// self::db = new SQLite3( DATABASE );
-		// self::db->enableExceptions( true );
 		$this->logger = new Logger();
 		$this->mailer = new Mailer();
 	}

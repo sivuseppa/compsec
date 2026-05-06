@@ -19,7 +19,7 @@ final class Task {
 	public $id          = null;
 	public $name        = '';
 	public $description = '';
-	public $status      = 'TODO';
+	public $status      = 'todo';
 	public $author_id;
 
 	/**
@@ -103,7 +103,7 @@ final class Task {
 			);
 		} else {
 			$statement = self::$db->prepare(
-				'INSERT INTO users ("id", "name", "description", "status", "author_id")
+				'INSERT INTO tasks ("id", "name", "description", "status", "author_id")
 				VALUES (:id, :name, :description, :status, :author_id)'
 			);
 		}
