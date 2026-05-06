@@ -13,21 +13,21 @@ export default {
       store,
       apiUrl: /backend/,
       tasks: [],
-      newTask: { id: null, name: '', description: '', status: 'TODO' },
+      // newTask: { id: null, name: '', description: '', status: 'TODO' },
     };
   },
-  methods: {
-    async save() {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        body: JSON.stringify({ ...this.newTask, action: 'saveTask' }),
-      });
-      const data = await response.json();
-      store.notice.type = data?.status;
-      store.notice.content = data?.message;
-      store.fetchTasks();
-    },
-  },
+  // methods: {
+  //   async save() {
+  //     const response = await fetch(this.apiUrl, {
+  //       method: 'POST',
+  //       body: JSON.stringify({ ...this.newTask, action: 'saveTask' }),
+  //     });
+  //     const data = await response.json();
+  //     store.notice.type = data?.status;
+  //     store.notice.content = data?.message;
+  //     store.fetchTasks();
+  //   },
+  // },
   mounted() {
     store.fetchTasks();
     console.log(store);
@@ -40,8 +40,8 @@ export default {
                     <td>Task ID</td>
                     <td>Name</td>
                     <td>Description</td>
-                    <td>Status</td>
                     <td>Author ID</td>
+                    <td>Status</td>
                     <td></td>
                     <td></td>
                   </tr>

@@ -134,6 +134,9 @@ final class User {
 	 * @param string $new_password The new password.
 	 */
 	public function save_password( $new_password ) {
+
+		new Logger()->write( $new_password );
+
 		$statement = self::$db->prepare(
 			'UPDATE users 
 			SET password = :password
@@ -160,10 +163,18 @@ final class User {
 
 
 	/**
-	 * Chech if the current user is admin or not.
+	 * Check if the current user is admin or not.
 	 */
 	public function is_admin() {
-		return true; // TODO.
+
+		$user_data = $this->get_userdata();
+		$user_role = isset( $user_data['role'] ) ? $user_data['role'] : '';
+
+		if ( 'admin' === $user_role ) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 

@@ -35,3 +35,51 @@ I assume that you have Composer (https://getcomposer.org/) installed in your sys
    ```bash
    ./vendor/bin/phpunit tests
    ```
+
+```
+compsec
+├─ data
+│  ├─ db
+│  └─ logs
+├─ public
+│  ├─ assets
+│  │  └─ fonts
+│  │     ├─ Inter_18pt-Medium.ttf
+│  │     └─ Inter_18pt-Regular.ttf
+│  ├─ backend
+│  │  └─ index.php
+│  ├─ components
+│  │  ├─ addTask.js
+│  │  ├─ addUser.js
+│  │  ├─ app.js
+│  │  ├─ avatar.js
+│  │  ├─ login.js
+│  │  ├─ navigation.js
+│  │  ├─ notice.js
+│  │  ├─ setting.js
+│  │  ├─ settings.js
+│  │  ├─ store.js
+│  │  ├─ task.js
+│  │  ├─ tasks.js
+│  │  ├─ user.js
+│  │  └─ users.js
+│  ├─ favicon.ico
+│  ├─ index.html
+│  └─ style.css
+├─ src
+│  ├─ app.php
+│  ├─ auth.php
+│  ├─ dotenv
+│  │  └─ dotenv.php
+│  ├─ functions.php
+│  ├─ logger.php
+│  ├─ mailer.php
+│  ├─ phpmailer
+|  │  └─ https://github.com/phpmailer/phpmailer
+│  ├─ settings.php
+│  ├─ task.php
+│  └─ user.php
+└─ tests
+   └─ UserTest.php
+
+```

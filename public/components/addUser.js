@@ -50,7 +50,7 @@ export default {
                   <small>Password</small>
                   <input id="newPassword" name="newPassword" type="text" v-model="newUser.password" required />
                 </label>
-                <button class="button">Save new user</button>
+                <button class="button">Add user</button>
               </form>
             </div>`,
 };

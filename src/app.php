@@ -207,7 +207,7 @@ final class App {
 				send_response_and_exit( 403, 'forbidden', 'Try another username.' );
 			}
 
-			$this->save_user_data( $post_data );
+			$this->save_user( $post_data );
 
 		} catch ( \Throwable $exception ) {
 			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
@@ -219,7 +219,7 @@ final class App {
 	 *
 	 * @param object $post_data the post data.
 	 */
-	public function save_user_data( $post_data ) {
+	public function save_user( $post_data ) {
 
 		try {
 
@@ -277,6 +277,33 @@ final class App {
 
 		$user = new User( $user_id );
 		$user->delete();
+	}
+
+	/**
+	 * Get user by email
+	 *
+	 * @param string $id the id fo the user.
+	 * @return int|bool user data on success, false on fail.
+	 */
+	public static function get_user_by_id( $id ) {
+		$email = intval( $id );
+		$db    = new SQLite3( DATABASE );
+
+		$statement = $db->prepare(
+			'SELECT * FROM users
+			WHERE id = :id'
+		);
+		$statement->bindValue( ':id', $id );
+		$result = $statement->execute();
+		$data   = $result->fetchArray( SQLITE3_ASSOC );
+
+		// new logger()->write( $data );
+
+		if ( $data ) {
+			return $data;
+		} else {
+			return false;
+		}
 	}
 
 
@@ -351,12 +378,11 @@ final class App {
 	public function add_new_task( $post_data ) {
 
 		try {
-
 			if ( isset( $post_data->id ) ) {
 				send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
 			}
 
-			$this->save_task_data( $post_data );
+			$this->save_task( $post_data );
 
 		} catch ( \Throwable $exception ) {
 			send_response_and_exit( 403, 'forbidden', $exception->getMessage() );
@@ -364,11 +390,11 @@ final class App {
 	}
 
 	/**
-	 * Validate and sanitize user data, and then save.
+	 * Validate and sanitize task data, and then save.
 	 *
 	 * @param object $post_data the post data.
 	 */
-	public function save_task_data( $post_data ) {
+	public function save_task( $post_data ) {
 
 		$this->logger->write( $post_data );
 
@@ -394,9 +420,18 @@ final class App {
 		$task->description = $description;
 		$task->status      = $status;
 
-		// For a new task, save current user as an author.
-		if ( ! $task_id ) {
+		if ( ! $task_id ) { // For a new task, save current user as an author.
 			$task->author_id = $this->user->id;
+		} else {
+
+			$author_id = isset( $post_data->author_id ) ? intval( $post_data->author_id ) : null;
+
+			// Check if the user found by author_id.
+			if ( self::get_user_by_id( $author_id ) ) {
+				$task->author_id = $author_id;
+			} else {
+				send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
+			}
 		}
 
 		$task->save();
@@ -404,6 +439,31 @@ final class App {
 		// send_response_and_exit( 401, 'error', 'Unauthorized.' );
 		// }
 	}
+
+	/**
+	 * Delete task
+	 *
+	 * @param object $post_data the post data.
+	 */
+	public function delete_task( $post_data ) {
+		$task_id = isset( $post_data->id ) && $post_data->id ? intval( $post_data->id ) : null;
+
+		if ( ! $task_id ) {
+			send_response_and_exit( 403, 'forbidden', 'Missing data.' );
+		}
+
+		$task           = new Task( $task_id );
+		$task_data      = $task->get_taskdata();
+		$task_author_id = $task_data['author_id'];
+
+		// Delete task only if current user is admin or task author.
+		if ( $this->user->is_admin() || intval( $this->user->id ) === intval( $task_author_id ) ) {
+			$task->delete();
+		} else {
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
+		}
+	}
+
 
 	/**
 	 * Trigger a reset password process, if user found on the system.

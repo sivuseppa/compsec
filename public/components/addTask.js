@@ -7,7 +7,7 @@ export default {
     return {
       store,
       apiUrl: /backend/,
-      newTask: { id: null, name: '', description: '', status: 'todo', author_id: null },
+      newTask: { id: null, name: '', description: '', status: 'TODO', author_id: null },
       isOpen: false,
     };
   },
@@ -38,7 +38,7 @@ export default {
               <form v-if="isOpen" @submit.prevent="addTask" id="saveTaskForm" class="saveUserForm card">
                 <label>
                   <small>Name</small>
-                  <input id="newTaskName" name="newTaskName" type="text" v-model="newTask.name" />
+                  <input id="newTaskName" name="newTaskName" type="text" v-model="newTask.name" required />
                 </label>
                 <label>
                   <small>Description</small>
@@ -47,17 +47,17 @@ export default {
                 <label>
                   <small>Status</small>
                   <select name="newTaskStatus" id="newTaskStatus" v-model="newTask.status">
-                    <option value="todo">TODO</option>
-                    <option value="progress">IN PROGRESS</option>
-                    <option value="review">IN REVIEW</option>
-                    <option value="ready">READY</option>
+                    <option value="TODO">TODO</option>
+                    <option value="IN PROGRESS">IN PROGRESS</option>
+                    <option value="IN REVIEW">IN REVIEW</option>
+                    <option value="READY">READY</option>
                   </select>
                 </label>
                 <label>
                   <small>Author</small>
                   <input id="newAuthor" name="newAuthor" type="text" v-model="newTask.author_id " required />
                 </label>
-                <button class="button">Save new task</button>
+                <button class="button">Add task</button>
               </form>
             </div>`,
 };

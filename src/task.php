@@ -19,7 +19,7 @@ final class Task {
 	public $id          = null;
 	public $name        = '';
 	public $description = '';
-	public $status      = 'todo';
+	public $status      = 'TODO';
 	public $author_id;
 
 	/**
@@ -41,7 +41,7 @@ final class Task {
 	public function get_taskdata() {
 
 		if ( ! $this->name ) {
-			$statement = self::$db->prepare( 'SELECT * FROM "task" WHERE "id" = ?' );
+			$statement = self::$db->prepare( 'SELECT * FROM "tasks" WHERE "id" = ?' );
 			$statement->bindValue( 1, $this->id );
 			$result    = $statement->execute();
 			$task_data = $result->fetchArray( SQLITE3_ASSOC );
@@ -123,5 +123,18 @@ final class Task {
 		// new Logger()->write( $user_data );
 
 		send_response_and_exit( 200, 'success', 'Task saved.' );
+	}
+
+	/**
+	 * Delete task.
+	 */
+	public function delete() {
+		$statement = self::$db->prepare(
+			'DELETE FROM "tasks"
+			WHERE id = :id'
+		);
+		$statement->bindValue( ':id', $this->id );
+		$statement->execute();
+		send_response_and_exit( 200, 'success', 'Task deleted.' );
 	}
 }
