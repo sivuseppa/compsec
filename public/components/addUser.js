@@ -1,5 +1,4 @@
 import { store } from './store.js';
-// import User from './user.js';
 
 export default {
   props: {},

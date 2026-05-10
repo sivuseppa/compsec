@@ -115,13 +115,6 @@ final class Task {
 		$statement->bindValue( ':author_id', $this->author_id );
 		$statement->execute();
 
-		// Test how userdata is saved, remove this!!!
-		// $statement = self::$db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
-		// $statement->bindValue( 1, $this->id );
-		// $result    = $statement->execute();
-		// $user_data = $result->fetchArray( SQLITE3_ASSOC );
-		// new Logger()->write( $user_data );
-
 		send_response_and_exit( 200, 'success', 'Task saved.' );
 	}
 

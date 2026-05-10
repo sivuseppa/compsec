@@ -30,7 +30,6 @@ export default {
   },
   mounted() {
     store.fetchUsers();
-    console.log(store);
   },
   template: `<div id="usersPage">
               <add-user></add-user>

@@ -28,7 +28,6 @@ export default {
         }),
       });
       const data = await response.json();
-      console.log(data);
       await store.setIsloggedIn();
       if (store.isLoggedIn) {
         this.username = '';

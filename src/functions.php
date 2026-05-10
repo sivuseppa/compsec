@@ -90,22 +90,14 @@ function is_valid_password( $password ) {
 
 /**
  * Generate random string.
- * Uses random_int() for cryptographically secure, uniformly selected integer.
+ * Uses random_bytes() for cryptographically secure, uniformly selected bytes.
  *
  * @param int $length the length of the random string.
  */
 function generate_random_string( $length = 32 ) {
-	// $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-	// $selected   = array();
-	// $max        = mb_strlen( $characters, '8bit' ) - 1;
-
-	// for ( $i = 0; $i < $length; ++$i ) {
-	// $pieces[] = $characters[ random_int( 0, $max ) ];
-	// }
-	// return implode( '', $pieces );
 
 	// Use cryptographically secure random bytes and make the string url safe.
 	return str_replace( array( '+', '/', '=' ), array( '-', '_', '' ), base64_encode( random_bytes( $length ) ) ); // phpcs:disable
-
-	// return urlencode( base64_encode( random_bytes( $length ) ) ); // phpcs:disable
 }
+
+

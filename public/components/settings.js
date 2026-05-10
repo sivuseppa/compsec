@@ -24,7 +24,6 @@ export default {
   },
   mounted() {
     store.fetchSettings();
-    console.log(store);
   },
   template: `<div id="settingsPage">
               <table class="card">

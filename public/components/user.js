@@ -40,7 +40,6 @@ export default {
               <td>{{ user.id }}</td>
               <td>{{ user.username }}</td>
               <td>{{ user.email }}</td>
-              <!-- <td>{{ user.role }}</td> -->
               <td>
                 <select name="newUserRole" value="" v-model="user.role">
                   <option value="user">User</option>

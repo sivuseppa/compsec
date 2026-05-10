@@ -114,13 +114,6 @@ final class User {
 		$statement->bindValue( ':role', $this->role );
 		$statement->execute();
 
-		// Test how userdata is saved, remove this!!!
-		// $statement = self::$db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
-		// $statement->bindValue( 1, $this->id );
-		// $result    = $statement->execute();
-		// $user_data = $result->fetchArray( SQLITE3_ASSOC );
-		// new Logger()->write( $user_data );
-
 		if ( $this->password ) {
 			$this->save_password( $this->password );
 		}
@@ -134,8 +127,6 @@ final class User {
 	 * @param string $new_password The new password.
 	 */
 	public function save_password( $new_password ) {
-
-		new Logger()->write( $new_password );
 
 		$statement = self::$db->prepare(
 			'UPDATE users 
@@ -266,7 +257,7 @@ final class User {
 		$pw_reset_timestamp = isset( $pw_reset_data['pw_reset_timestamp'] ) ? intval( $pw_reset_data['pw_reset_timestamp'] ) : 0;
 		$timenow            = intval( time() );
 
-		$is_valid_key  = $pw_reset_key === $_pw_reset_key;
+		$is_valid_key  = hash_equals( $pw_reset_key, $_pw_reset_key );
 		$is_valid_time = ( $timenow - $pw_reset_timestamp ) < 300; // Max valid time is 5 min.
 
 		if ( $is_valid_time && $is_valid_key ) {
