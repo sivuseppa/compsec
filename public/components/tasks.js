@@ -13,24 +13,10 @@ export default {
       store,
       apiUrl: /backend/,
       tasks: [],
-      // newTask: { id: null, name: '', description: '', status: 'TODO' },
     };
   },
-  // methods: {
-  //   async save() {
-  //     const response = await fetch(this.apiUrl, {
-  //       method: 'POST',
-  //       body: JSON.stringify({ ...this.newTask, action: 'saveTask' }),
-  //     });
-  //     const data = await response.json();
-  //     store.notice.type = data?.status;
-  //     store.notice.content = data?.message;
-  //     store.fetchTasks();
-  //   },
-  // },
   mounted() {
     store.fetchTasks();
-    console.log(store);
   },
   template: `<div id="tasksPage">
               <add-task></add-task>

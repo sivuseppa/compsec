@@ -55,13 +55,13 @@ final class Auth {
 		if ( password_verify( $password, $user_data['password'] ) ) {
 
 			$user->id = $user_data['id'];
-			$time     = time(); // define time variable here to ease unit testing.
+			$time     = time(); // define time variable here to ease testing.
 
 			$options = array(
 				'expires'  => $time + 3600,
 				'path'     => '/',
 				'secure'   => true,
-				'httponly' => false,
+				'httponly' => true,
 				'samesite' => 'Strict',
 			);
 			setcookie(

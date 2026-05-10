@@ -412,9 +412,6 @@ final class App {
 			send_response_and_exit( 403, 'forbidden', 'Missing data.' );
 		}
 
-		// User can save only own task, admin can save others tasks too.
-		// if ( $user_id === $this->user->id || $this->user->is_admin() ) {
-
 		$task              = new Task( $task_id );
 		$task->name        = $name;
 		$task->description = $description;
@@ -432,12 +429,14 @@ final class App {
 			} else {
 				send_response_and_exit( 403, 'forbidden', 'Ambiguous data.' );
 			}
+
+			// Basic User can save only own task, admin can save others tasks too.
+			if ( intval( $this->user->id ) !== $author_id && ! $this->user->is_admin() ) {
+				send_response_and_exit( 401, 'error', 'Unauthorized.' );
+			}
 		}
 
 		$task->save();
-		// } else {
-		// send_response_and_exit( 401, 'error', 'Unauthorized.' );
-		// }
 	}
 
 	/**
@@ -466,9 +465,9 @@ final class App {
 
 
 	/**
-	 * Trigger a reset password process, if user found on the system.
+	 * Send a reset password email, if user found on the system.
 	 *
-	 * @param Object $post_data The post data containing the email address of the user whose password we want to reset.
+	 * @param Object $post_data The post data containing an email address of the user.
 	 */
 	public function maybe_send_reset_password_email( $post_data ) {
 

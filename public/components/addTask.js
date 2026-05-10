@@ -1,5 +1,4 @@
 import { store } from './store.js';
-// import User from './user.js';
 
 export default {
   props: {},
@@ -29,7 +28,6 @@ export default {
   },
   async mounted() {
     const currentAuthor = await this.store.getCurrentUser();
-    console.log(currentAuthor.id);
     this.newTask.author_id = currentAuthor.id;
   },
   template: `
@@ -55,7 +53,7 @@ export default {
                 </label>
                 <label>
                   <small>Author</small>
-                  <input id="newAuthor" name="newAuthor" type="text" v-model="newTask.author_id " required />
+                  <input id="newAuthor" name="newAuthor" type="text" v-model="newTask.author_id" :readonly="this.store.currentUser.role !== 'admin'" required />
                 </label>
                 <button class="button">Add task</button>
               </form>

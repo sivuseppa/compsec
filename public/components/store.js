@@ -39,19 +39,16 @@ export const store = reactive({
     if (Object.keys(this.currentUser).length > 0) {
       return this.currentUser;
     }
-
     const response = await fetch(this.apiUrl + '?action=getCurrentUser');
     const data = await response.json();
     this.currentUser = { ...data.message };
     return this.currentUser;
   },
   async setIsloggedIn() {
-    const cookieValue = document.cookie.split('; ').find((row) => row.startsWith('HSA_TOKEN='));
-    this.isLoggedIn = cookieValue ? true : false;
-    if (this.isLoggedIn) {
-      await this.getCurrentUser();
-      console.log(this.currentUser);
-    }
+    const response = await fetch(this.apiUrl + '?action=getCurrentUser');
+    const data = await response.json();
+    this.currentUser = { ...data.message };
+    this.isLoggedIn = this.currentUser?.id ? true : false;
   },
   setNotice(type = '', content = '', canBeDissmissed = true) {
     this.notice.type = type;

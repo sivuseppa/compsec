@@ -44,8 +44,6 @@ compsec
 ├─ public
 │  ├─ assets
 │  │  └─ fonts
-│  │     ├─ Inter_18pt-Medium.ttf
-│  │     └─ Inter_18pt-Regular.ttf
 │  ├─ backend
 │  │  └─ index.php
 │  ├─ components
