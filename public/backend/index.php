@@ -9,88 +9,95 @@ namespace MMoro\CompSecApp;
 
 define( 'SRC_DIR', dirname( __DIR__, 2 ) . '/src/' );
 define( 'DATA_DIR', dirname( __DIR__, 2 ) . '/data/' );
+define( 'DATABASE', DATA_DIR . 'db/db.sqlite' );
+define( 'APP_VERSION', '0.1.0' );
 header( 'Content-Type: application/json' );
 
+require_once SRC_DIR . 'functions.php';
 require_once SRC_DIR . 'dotenv/dotenv.php';
 require_once SRC_DIR . 'logger.php';
 require_once SRC_DIR . 'app.php';
 
-try {
-	new DotEnv( dirname( __DIR__, 2 ) . '/.env' )->load(); // Load .env file data to $_ENV superglobal.
+( function () {
+	// Prevent global scoping. Why?
 
-	$app = new App();
+	try {
+		new DotEnv( dirname( __DIR__, 2 ) . '/.env' )->load(); // Load .env file data to $_ENV superglobal.
 
-	$request_method = $_SERVER['REQUEST_METHOD'];
+		$app    = new App();
+		$method = $_SERVER['REQUEST_METHOD'];
+		$data   = null;
+		$action = null;
 
-	$data   = null;
-	$action = null;
+		// Get action parameters and POST data.
+		if ( 'POST' === $method ) {
+			$json   = file_get_contents( 'php://input' );
+			$data   = json_decode( $json );
+			$action = isset( $data->action ) ? $data->action : '';
 
-	// Get action parameters and POST data.
-	if ( 'POST' === $request_method ) {
-		$json   = file_get_contents( 'php://input' );
-		$data   = json_decode( $json );
-		$action = isset( $data->action ) ? $data->action : '';
+			new Logger()->write( $data );
 
-		// Login or Create account are only actions allowed without authentication.
-		if ( 'login' === $action ) {
-			$app->user->login( $data );
+			// Login and resetPassword are only actions allowed without authentication.
+			if ( 'login' === $action ) {
+				$app->log_user_in( $data );
+			} elseif ( 'lostPassword' === $action ) {
+				$app->maybe_send_reset_password_email( $data );
+			} elseif ( 'resetPassword' === $action ) {
+				$app->maybe_reset_password( $data );
+			}
+		} elseif ( 'GET' === $method ) {
+			$action = isset( $_GET['action'] ) ? $_GET['action'] : '';
 		}
-	} elseif ( 'GET' === $request_method ) {
-		$action = isset( $_GET['action'] ) ? $_GET['action'] : '';
-	}
 
-	// Stop unauthenticated execution here.
-	if ( ! $app->user->is_logged_in() ) {
-		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
-		http_response_code( 401 );
-		echo json_encode(
-			array(
-				'status'  => 'error 1',
-				'message' => 'unauthorized',
-			)
-		);
-		exit;
-	}
+		// Stop unauthenticated execution here.
+		if ( ! $app->is_user_logged_in() ) {
+			setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
+			send_response_and_exit( 401, 'error', 'Unauthorized.' );
+		}
 
-	// Call app methods based on an action parameter.
-	switch ( $request_method ) {
-		case 'GET':
-			if ( 'getUser' === $action ) {
-				$app->get_user();
-			} elseif ( 'getAssistant' === $action ) {
-				$app->get_assistant();
-			} elseif ( 'getAllAssistants' === $action ) {
-				$app->get_all_assistants();
-			} else {
-				throw new \Exception( 'Please check your action.' );
-			}
-			break;
-		case 'POST':
-			if ( 'logout' === $action ) {
-				$app->user->logout();
-			} elseif ( 'addUser' === $action ) {
-				$app->user->add( $data );
-			} elseif ( 'editUser' === $action ) {
-				$app->edit_user();
-			} elseif ( 'addAssistant' === $action ) {
-				$app->add_assistant();
-			} elseif ( 'editAssistant' === $action ) {
-				$app->edit_assistant();
-			} else {
-				throw new \Exception( 'Please check your action.' );
-			}
-			break;
-		default:
-			break;
+		// Call app methods based on an action parameter.
+		switch ( $method ) {
+			case 'GET':
+				if ( 'getCurrentUser' === $action ) {
+					$app->return_current_user();
+				} elseif ( 'getUsers' === $action ) {
+					$app->return_users();
+				} elseif ( 'getTasks' === $action ) {
+					$app->return_tasks();
+				} elseif ( 'getSettings' === $action ) {
+					$app->return_all_settings();
+				} else {
+					throw new \Exception( 'Please check your action.' );
+				}
+				break;
+			case 'POST':
+				if ( 'logout' === $action ) {
+					$app->log_user_out();
+				} elseif ( 'addUser' === $action ) {
+					$app->add_new_user( $data );
+				} elseif ( 'saveUser' === $action ) {
+					$app->save_user( $data );
+				} elseif ( 'deleteUser' === $action ) {
+					$app->delete_user( $data );
+				} elseif ( 'addTask' === $action ) {
+					$app->add_new_task( $data );
+				} elseif ( 'saveTask' === $action ) {
+					$app->save_task( $data );
+				} elseif ( 'deleteTask' === $action ) {
+					$app->delete_task( $data );
+				} elseif ( 'saveSettings' === $action ) {
+					$app->save_all_settings( $data );
+				} else {
+					throw new \Exception( 'Please check your action.' );
+				}
+				break;
+			default:
+				throw new \Exception( 'Please check your method.' );
+		}
+	} catch ( \Throwable $exception ) {
+		new Logger()->write( $exception->getMessage() );
+		send_response_and_exit( 500, 'error', 'System error.' );
 	}
-} catch ( \Throwable $exception ) {
-	new Logger()->write( $exception->getMessage() );
-	http_response_code( 500 );
-	echo json_encode(
-		array(
-			'status'  => 'error',
-			'message' => '#1',
-		)
-	);
-	exit;
-}
+} )();
+
+send_response_and_exit( 401, 'error', 'Unauthorized.' );
