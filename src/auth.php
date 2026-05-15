@@ -66,7 +66,7 @@ final class Auth {
 			);
 			setcookie(
 				'HSA_TOKEN',
-				$user->id . '_' . $this->create_token( $user, $time ),
+				$this->create_token( $user, $time ),
 				$options
 			);
 			send_response_and_exit( 200, 'success', 'Logged in.' );
@@ -83,6 +83,17 @@ final class Auth {
 	 * Logout
 	 */
 	public function log_user_out() {
+
+		$cookie_value = isset( $_COOKIE['HSA_TOKEN'] ) ? $_COOKIE['HSA_TOKEN'] : '';
+
+		// Remove session from the database.
+		$statement = self::$db->prepare(
+			'DELETE FROM "sessions"
+			WHERE token = :token'
+		);
+		$statement->bindValue( ':token', $cookie_value );
+		$statement->execute();
+
 		setcookie( 'HSA_TOKEN', '', 0, '/' ); // Set outdated timestamp to remove cookie.
 		send_response_and_exit( 200, 'success', 'Logged out.' );
 	}
@@ -101,31 +112,36 @@ final class Auth {
 			return false;
 		}
 
-		$splitted_cookie = explode( '_', $cookie_value, 2 );
-		$user_id         = isset( $splitted_cookie[0] ) && $splitted_cookie[0] ? $splitted_cookie[0] : null;
-		$token           = isset( $splitted_cookie[1] ) && $splitted_cookie[1] ? $splitted_cookie[1] : null;
+		// Find session data by cookie.
+		$statement = self::$db->prepare( 'SELECT * FROM "sessions" WHERE "token" = ?' );
+		$statement->bindValue( 1, $cookie_value );
+		$result       = $statement->execute();
+		$session_data = $result->fetchArray( SQLITE3_ASSOC );
+		$result->finalize();
 
-		if ( ! $user_id || ! $token ) {
+		if ( ! $session_data ) {
 			return false;
 		}
 
-		$token_data  = openssl_decrypt(
-			$token,
-			$this->cipher,
-			$_ENV['APP_SECRET_KEY'], // A secret key from enviroment vars.
-			$options = 0,
-			$user->get_init_vector( $user_id )  // User specific IV from the database.
-		);
-		$token_data = json_decode( $token_data, true );
+		// Check that user still exists in the database.
+		$statement = self::$db->prepare( 'SELECT * FROM "users" WHERE "id" = ?' );
+		$statement->bindValue( 1, intval( $session_data['user_id'] ) );
+		$result    = $statement->execute();
+		$user_data = $result->fetchArray( SQLITE3_ASSOC );
+		$result->finalize();
 
-		$is_valid_user = isset( $token_data['user_id'] )
-						&& intval( $token_data['user_id'] ) === intval( $user_id );
-		$cookietime    = isset( $token_data['timestamp'] ) ? intval( $token_data['timestamp'] ) : 0;
+		if ( ! $user_data ) {
+			return false;
+		}
+
+		// Check if the session is still valid by the time.
+		$cookietime    = isset( $session_data['timestamp'] ) ? intval( $session_data['timestamp'] ) : 0;
 		$timenow       = intval( time() );
 		$is_valid_time = ( $timenow - $cookietime ) < 3600; // Max login time is 1 hour.
 
-		if ( $is_valid_user && $is_valid_time ) {
-			$user->id = $user_id;
+		if ( $is_valid_time ) {
+			// If everything is ok, let user in.
+			$user->id = $session_data['user_id'];
 			return true;
 		}
 
@@ -136,41 +152,23 @@ final class Auth {
 	/**
 	 * Create a cryptographically secure token for login cookie.
 	 *
+	 * @param Object $user The user.
 	 * @param string $time The timestamp.
-	 * @throws \Exception When somethin goes wrong.
 	 */
 	public function create_token( $user, $time ) {
 
-		$data = json_encode(
-			array(
-				'user_id'   => $user->id,
-				'timestamp' => $time,
-			)
+		$token = bin2hex( random_bytes( 32 ) );
+
+		$statement = self::$db->prepare(
+			'INSERT INTO "sessions" ("id", "user_id", "token", "timestamp")
+			VALUES (:id, :user_id, :token, :timestamp)'
 		);
+		$statement->bindValue( ':id', null );
+		$statement->bindValue( ':user_id', $user->id );
+		$statement->bindValue( ':token', $token );
+		$statement->bindValue( ':timestamp', $time );
+		$statement->execute();
 
-		if ( in_array( $this->cipher, openssl_get_cipher_methods(), true ) ) {
-
-			$ivlen       = openssl_cipher_iv_length( $this->cipher );
-			$init_vector = openssl_random_pseudo_bytes( $ivlen );
-
-			$token       = openssl_encrypt(
-				$data,
-				$this->cipher,
-				$_ENV['APP_SECRET_KEY'], // The secret key from enviroment vars.
-				$options = 0,
-				$init_vector,
-			);
-
-			if ( ! $token ) {
-				throw new \Exception( 'Error Processing Request' );
-			}
-
-			// Save IV to the the database.
-			$user->save_init_vector( $init_vector );
-
-			return $token;
-		} else {
-			throw new \Exception( 'Error Processing Request' );
-		}
+		return $token;
 	}
 }

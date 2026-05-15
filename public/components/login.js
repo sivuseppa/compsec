@@ -16,7 +16,7 @@ export default {
     };
   },
   methods: {
-    async send(e) {
+    async post(e) {
       const response = await fetch(store.apiUrl, {
         method: 'POST',
         body: JSON.stringify({
@@ -52,7 +52,7 @@ export default {
   mounted() {
     this.setMode();
   },
-  template: `<form @submit.prevent="send" id="loginform" class="loginform">
+  template: `<form @submit.prevent="post" id="loginform" class="loginform">
               <header class="logo">
                 <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 -960 960 960" width="40px" fill="#cf2828de">
                   <path
