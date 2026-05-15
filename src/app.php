@@ -61,9 +61,6 @@ final class App {
 					"email" VARCHAR,
 					"password" VARCHAR,
 					"role" VARCHAR,
-					"iv" VARCHAR,
-					"otp" int,
-					"otp_timestamp" VARCHAR,
 					"pw_reset_key" VARCHAR,
 					"pw_reset_timestamp" VARCHAR
 				)'
@@ -80,22 +77,20 @@ final class App {
 			);
 
 			$this->db->query(
-				'CREATE TABLE IF NOT EXISTS "users_tasks" (
-					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-					"user_id" VARCHAR,
-					"task_id" VARCHAR,
-					"role" VARCHAR,
-					FOREIGN KEY(user_id) REFERENCES users(id),
-					FOREIGN KEY(task_id) REFERENCES tasks(id)
-				)'
-			);
-
-			$this->db->query(
 				'CREATE TABLE IF NOT EXISTS "settings" (
 					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 					"name" VARCHAR,
 					"label" VARCHAR,
 					"value" VARCHAR
+				)'
+			);
+
+			$this->db->query(
+				'CREATE TABLE IF NOT EXISTS "sessions" (
+					"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					"user_id" INT,
+					"token" VARCHAR,
+					"timestamp" VARCHAR
 				)'
 			);
 
